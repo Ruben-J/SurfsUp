@@ -1,4 +1,4 @@
-import { beaufort, directionDifference, scoreConditions, scoreLabel } from "./scoring.js";
+import { beaufort, directionDifference, scoreConditions, scoreLabel } from "./scoring.js?v=__ASSET_VERSION__";
 
 const state = { data: null, history: null, activeBuoy: "e13", historyHours: 24, chartPoints: [] };
 

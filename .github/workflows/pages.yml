@@ -34,7 +34,9 @@ jobs:
       - name: Website samenstellen
         run: |
           mkdir -p _site/data
-          cp index.html styles.css app.js scoring.js _site/
+          sed "s/__ASSET_VERSION__/${GITHUB_SHA}/g" index.html > _site/index.html
+          sed "s/__ASSET_VERSION__/${GITHUB_SHA}/g" app.js > _site/app.js
+          cp styles.css scoring.js _site/
           cp data/latest.json data/history.json data/archive.json _site/data/
           touch _site/.nojekyll
 
