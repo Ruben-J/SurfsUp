@@ -310,7 +310,7 @@ function chartMarkup(buoy) {
     const date = parseTime(point.time);
     const label = state.historyHours > 24
       ? new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short" }).format(date)
-      : new Intl.DateTimeFormat("nl-NL", { weekday: "short", hour: "2-digit" }).format(date);
+      : `${new Intl.DateTimeFormat("nl-NL", { weekday: "short" }).format(date)}, ${new Intl.DateTimeFormat("nl-NL", { hour: "2-digit", hourCycle: "h23" }).format(date)}u`;
     return `<text class="axis-label" text-anchor="middle" x="${x(point)}" y="216">${label}</text>`;
   }).join("");
   const area = historyPoints.length > 1 ? `${historyPath} L${x(historyPoints.at(-1))},${y(0)} L${x(historyPoints[0])},${y(0)} Z` : "";
