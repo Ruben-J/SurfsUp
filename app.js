@@ -235,44 +235,55 @@ function chartMarkup(buoy) {
   const forecast = buoy.forecast
     .filter((item) => (parseTime(item.time)?.getTime() || 0) > lastHistoryTime)
     .slice(0, 72);
-  const historyPoints = history.map((item) => ({
-    time: item.time,
-    height: item.waveHeight,
-    period: item.wavePeriod,
-    direction: item.waveDirection,
-    swell: item.swellHeight,
-    type: "history",
-    weather: weatherForTime(item.time, state.history?.weather),
-  }));
-  const forecastPoints = forecast.map((item) => ({
-    time: item.time,
-    height: item.waveHeight,
-    period: item.wavePeriod,
-    direction: item.waveDirection,
-    swell: item.swellHeight,
-    type: "forecast",
-    weather: weatherForTime(item.time, state.data.maasvlakte.weatherForecast),
-  }));
+  const historyPoints = history.map((item) => {
+    const weather = weatherForTime(item.time, state.history?.weather);
+    return {
+      time: item.time,
+      height: item.waveHeight,
+      period: item.wavePeriod,
+      direction: item.waveDirection,
+      swell: item.swellHeight,
+      score: scoreConditions(item, weather),
+      type: "history",
+      weather,
+    };
+  });
+  const forecastPoints = forecast.map((item) => {
+    const weather = weatherForTime(item.time, state.data.maasvlakte.weatherForecast);
+    return {
+      time: item.time,
+      height: item.waveHeight,
+      period: item.wavePeriod,
+      direction: item.waveDirection,
+      swell: item.swellHeight,
+      score: scoreConditions(item, weather),
+      type: "forecast",
+      weather,
+    };
+  });
   const points = [...historyPoints, ...forecastPoints];
   if (points.length < 2) return `<p class="model-note">Er zijn nog niet genoeg punten voor de grafiek.</p>`;
   const width = 1000;
   const height = 220;
-  const pad = { left: 34, right: 12, top: 14, bottom: 28 };
+  const pad = { left: 34, right: 42, top: 14, bottom: 28 };
   const maxY = Math.max(1, Math.ceil(Math.max(...points.map((point) => point.height || 0)) * 2) / 2);
   const x = (index) => pad.left + (index / (points.length - 1)) * (width - pad.left - pad.right);
   const y = (value) => pad.top + (1 - (value || 0) / maxY) * (height - pad.top - pad.bottom);
-  const line = (items, offset, key) => items.map((item, index) => `${index ? "L" : "M"}${x(index + offset).toFixed(1)},${y(item[key]).toFixed(1)}`).join(" ");
+  const scoreY = (value) => pad.top + (1 - (value || 0) / 100) * (height - pad.top - pad.bottom);
+  const line = (items, offset, key, scale = y) => items.map((item, index) => `${index ? "L" : "M"}${x(index + offset).toFixed(1)},${scale(item[key]).toFixed(1)}`).join(" ");
   const historyPath = line(historyPoints, 0, "height");
   const bridge = forecastPoints.length && historyPoints.length ? [historyPoints.at(-1), ...forecastPoints] : forecastPoints;
   const forecastOffset = Math.max(0, historyPoints.length - 1);
   const forecastPath = line(bridge, forecastOffset, "height");
   const swellPath = line(points, 0, "swell");
+  const scorePath = line(points, 0, "score", scoreY);
   const nowX = x(Math.max(0, historyPoints.length - 1));
   const grid = [0, .5, 1].map((ratio) => {
     const value = maxY * ratio;
     return `<line class="grid-line" x1="${pad.left}" x2="${width - pad.right}" y1="${y(value)}" y2="${y(value)}" />
       <text class="axis-label" x="0" y="${y(value) + 3}">${round(value)} m</text>`;
   }).join("");
+  const scoreAxis = [0, 50, 100].map((value) => `<text class="score-axis-label" text-anchor="end" x="${width}" y="${scoreY(value) + 3}">${value}</text>`).join("");
   const labelStep = Math.max(1, Math.ceil(points.length / 7));
   const labels = points.map((point, index) => {
     if (index % labelStep && index !== points.length - 1) return "";
@@ -283,24 +294,24 @@ function chartMarkup(buoy) {
     return `<text class="axis-label" text-anchor="middle" x="${x(index)}" y="216">${label}</text>`;
   }).join("");
   const area = historyPoints.length > 1 ? `${historyPath} L${x(historyPoints.length - 1)},${y(0)} L${x(0)},${y(0)} Z` : "";
-  state.chartPoints = points.map((point, index) => ({ ...point, x: x(index), y: y(point.height) }));
+  state.chartPoints = points.map((point, index) => ({ ...point, x: x(index), y: y(point.height), scoreY: scoreY(point.score) }));
   const rangeButtons = [[24, "24 uur"], [168, "7 dagen"], [720, "30 dagen"]].map(([hours, label]) => `
     <button class="range-button" data-range-hours="${hours}" aria-pressed="${state.historyHours === hours}">${label}</button>`).join("");
 
   return `<div class="chart-wrap">
     <div class="chart-head">
-      <div><strong>Golfhoogte: historie & verwachting</strong><div class="chart-legend"><span>Meting</span><span class="forecast">Verwachting</span><span class="swell">Deining</span></div></div>
+      <div><strong>Golfhoogte & surfscore per uur</strong><div class="chart-legend"><span>Meting</span><span class="forecast">Verwachting</span><span class="swell">Deining</span><span class="score">Surfscore</span></div></div>
       <div class="range-switch" aria-label="Kies periode">${rangeButtons}</div>
     </div>
     <div class="chart-scroll">
-    <svg class="wave-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Golfhoogte van de afgelopen ${state.historyHours} uur en verwachting voor 72 uur">
+    <svg class="wave-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Golfhoogte en surfscore per uur van de afgelopen ${state.historyHours} uur en verwachting voor 72 uur">
       <defs><linearGradient id="historyGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c5d68" stop-opacity=".16"/><stop offset="1" stop-color="#0c5d68" stop-opacity="0"/></linearGradient></defs>
-      ${grid}<path class="history-area" d="${area}"/><path class="history-line" d="${historyPath}"/><path class="forecast-line" d="${forecastPath}"/><path class="swell-line" d="${swellPath}"/>
+      ${grid}${scoreAxis}<path class="history-area" d="${area}"/><path class="history-line" d="${historyPath}"/><path class="forecast-line" d="${forecastPath}"/><path class="swell-line" d="${swellPath}"/><path class="score-line" d="${scorePath}"/>
       <line class="now-line" x1="${nowX}" x2="${nowX}" y1="${pad.top}" y2="${height-pad.bottom}"/><text class="now-label" x="${nowX+5}" y="12">Nu</text>${labels}
-      <line class="hover-line" x1="0" x2="0" y1="${pad.top}" y2="${height-pad.bottom}"/><circle class="hover-dot" cx="0" cy="0" r="5"/>
+      <line class="hover-line" x1="0" x2="0" y1="${pad.top}" y2="${height-pad.bottom}"/><circle class="hover-dot" cx="0" cy="0" r="5"/><circle class="hover-score-dot" cx="0" cy="0" r="5"/>
     </svg>
     </div>
-    <div class="chart-readout" aria-live="polite"><span>Beweeg over de grafiek voor golfhoogte, periode, richting en wind.</span></div>
+    <div class="chart-readout" aria-live="polite"><span>Beweeg over de grafiek voor de surfscore en condities per uur.</span></div>
     <p class="model-note">* Modelwaarde. Metingen komen van Rijkswaterstaat; verwachting en ontbrekende deiningswaarden van Open-Meteo Marine.</p>
   </div>`;
 }
@@ -310,7 +321,8 @@ function setupChartInteractions() {
   const readout = document.querySelector(".chart-readout");
   const hoverLine = chart?.querySelector(".hover-line");
   const hoverDot = chart?.querySelector(".hover-dot");
-  if (!chart || !readout || !hoverLine || !hoverDot || !state.chartPoints.length) return;
+  const hoverScoreDot = chart?.querySelector(".hover-score-dot");
+  if (!chart || !readout || !hoverLine || !hoverDot || !hoverScoreDot || !state.chartPoints.length) return;
 
   const showPoint = (event) => {
     const rect = chart.getBoundingClientRect();
@@ -322,18 +334,22 @@ function setupChartInteractions() {
     hoverLine.setAttribute("x2", point.x);
     hoverDot.setAttribute("cx", point.x);
     hoverDot.setAttribute("cy", point.y);
+    hoverScoreDot.setAttribute("cx", point.x);
+    hoverScoreDot.setAttribute("cy", point.scoreY);
     hoverLine.classList.add("visible");
     hoverDot.classList.add("visible");
+    hoverScoreDot.classList.add("visible");
     const wind = point.weather;
     const direction = Number.isFinite(point.direction) ? `${directionName(point.direction)} · ${Math.round(point.direction)}°` : "–";
     const windText = wind ? `${directionName(wind.windDirection)} ${beaufort(wind.windSpeed)} Bft` : "–";
-    readout.innerHTML = `<strong>${fmt.dateTime.format(parseTime(point.time))}</strong><span>${point.type === "history" ? "Gemeten" : "Verwachting"}</span><span><b>${round(point.height, 2)} m</b> golf</span><span><b>${round(point.period)} s</b> periode</span><span><b>${direction}</b> richting</span><span><b>${windText}</b> wind</span>`;
+    readout.innerHTML = `<strong>${fmt.dateTime.format(parseTime(point.time))}</strong><span>${point.type === "history" ? "Gemeten" : "Verwachting"}</span><span class="score-readout"><b>${point.score}/100</b> surfscore</span><span><b>${round(point.height, 2)} m</b> golf</span><span><b>${round(point.period)} s</b> periode</span><span><b>${direction}</b> richting</span><span><b>${windText}</b> wind</span>`;
   };
   chart.addEventListener("pointermove", showPoint);
   chart.addEventListener("click", showPoint);
   chart.addEventListener("pointerleave", () => {
     hoverLine.classList.remove("visible");
     hoverDot.classList.remove("visible");
+    hoverScoreDot.classList.remove("visible");
   });
 }
 

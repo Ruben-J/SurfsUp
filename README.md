@@ -6,7 +6,7 @@ Een rustig, mobielvriendelijk surf-dashboard voor de Maasvlakte. De site combine
 
 - Eurogeul E13, Europlatform en J6: maximale en significante golfhoogte, golfperiode en -richting, deiningshoogte, -periode en -richting.
 - Een interactieve grafiek met keuze uit 24 uur, 7 dagen of 30 dagen gemeten historie en 72 uur verwachting.
-- Uitlezen van golfhoogte, periode, richting en wind op ieder punt in de grafiek.
+- Een surfscorelijn per uur, met uitlezing van score, golfhoogte, periode, richting en wind op ieder punt in de grafiek.
 - Een vijfdaagse surfinschatting met vandaag prominent in het midden, twee gemeten dagen ervoor en twee verwachte dagen erna.
 - Maasvlakte: volgend hoog- en laagwater, getijcoëfficiënt, wind, lucht- en zeewatertemperatuur.
 - Windsnelheden worden als Beaufort weergegeven; richtingspijlen wijzen naar de richting waarin wind en golven bewegen.
