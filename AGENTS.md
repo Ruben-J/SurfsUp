@@ -136,10 +136,12 @@ De grafiek per boei combineert:
 
 - gemeten significante golfhoogte;
 - verwachte golfhoogte;
-- deining;
+- gemeten laagfrequente deining (`HTE3`);
 - uur-surfscore.
 
 Bereiken: 24 uur, 7 dagen en 30 dagen historie, gevolgd door maximaal 72 uur forecast. De linker as is meter; de rechter as is score `0–100`. Hover of tik toont tijdstip, score, hoogte, periode, richting en wind.
+
+De deiningslijn stopt bij de metingen. Trek deze niet door met `swell_wave_height` van Open-Meteo: RWS `HTE3` bevat alleen laagfrequente energie van 30–100 mHz (ongeveer 10–33 s), terwijl het model ook veel kortere golfcomponenten als swell indeelt. Eén doorlopende lijn zou daardoor onvergelijkbare waarden tonen en een misleidende sprong veroorzaken.
 
 De historische uur-score wordt berekend met boeihistorie plus de dichtstbijzijnde historische windmeting. De forecastscore gebruikt de weersverwachting bij hetzelfde uur.
 

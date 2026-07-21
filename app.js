@@ -271,11 +271,25 @@ function chartMarkup(buoy) {
   const y = (value) => pad.top + (1 - (value || 0) / maxY) * (height - pad.top - pad.bottom);
   const scoreY = (value) => pad.top + (1 - (value || 0) / 100) * (height - pad.top - pad.bottom);
   const line = (items, offset, key, scale = y) => items.map((item, index) => `${index ? "L" : "M"}${x(index + offset).toFixed(1)},${scale(item[key]).toFixed(1)}`).join(" ");
+  const lineWithGaps = (items, key, scale = y) => {
+    let drawing = false;
+    return items.map((item, index) => {
+      if (!Number.isFinite(item[key])) {
+        drawing = false;
+        return "";
+      }
+      const command = drawing ? "L" : "M";
+      drawing = true;
+      return `${command}${x(index).toFixed(1)},${scale(item[key]).toFixed(1)}`;
+    }).join(" ");
+  };
   const historyPath = line(historyPoints, 0, "height");
   const bridge = forecastPoints.length && historyPoints.length ? [historyPoints.at(-1), ...forecastPoints] : forecastPoints;
   const forecastOffset = Math.max(0, historyPoints.length - 1);
   const forecastPath = line(bridge, forecastOffset, "height");
-  const swellPath = line(points, 0, "swell");
+  // RWS HTE3 is low-frequency swell (10–33 s). Open-Meteo's swell partition
+  // also contains much shorter waves, so it must not continue the same line.
+  const swellPath = lineWithGaps(historyPoints, "swell");
   const scorePath = line(points, 0, "score", scoreY);
   const nowX = x(Math.max(0, historyPoints.length - 1));
   const grid = [0, .5, 1].map((ratio) => {
@@ -300,7 +314,7 @@ function chartMarkup(buoy) {
 
   return `<div class="chart-wrap">
     <div class="chart-head">
-      <div><strong>Golfhoogte & surfscore per uur</strong><div class="chart-legend"><span>Meting</span><span class="forecast">Verwachting</span><span class="swell">Deining</span><span class="score">Surfscore</span></div></div>
+      <div><strong>Golfhoogte & surfscore per uur</strong><div class="chart-legend"><span>Meting</span><span class="forecast">Verwachting</span><span class="swell">Lange deining (meting)</span><span class="score">Surfscore</span></div></div>
       <div class="range-switch" aria-label="Kies periode">${rangeButtons}</div>
     </div>
     <div class="chart-scroll">
@@ -312,7 +326,7 @@ function chartMarkup(buoy) {
     </svg>
     </div>
     <div class="chart-readout" aria-live="polite"><span>Beweeg over de grafiek voor de surfscore en condities per uur.</span></div>
-    <p class="model-note">* Modelwaarde. Metingen komen van Rijkswaterstaat; verwachting en ontbrekende deiningswaarden van Open-Meteo Marine.</p>
+    <p class="model-note">* Modelwaarde. Golfverwachting van Open-Meteo Marine. De deiningslijn toont alleen de vergelijkbare laagfrequente Rijkswaterstaat-metingen; hiervoor is geen gelijkwaardige forecast beschikbaar.</p>
   </div>`;
 }
 
