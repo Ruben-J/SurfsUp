@@ -1,3 +1,5 @@
+import { directionDifference, scoreConditions, scoreLabel } from "./scoring.js";
+
 const state = { data: null, activeBuoy: "e13" };
 
 const fmt = {
@@ -41,41 +43,9 @@ function directionName(degrees) {
   return names[Math.round(((degrees % 360) / 45)) % 8];
 }
 
-function directionDifference(a, b) {
-  return 180 - Math.abs(Math.abs(a - b) - 180);
-}
-
 function round(value, digits = 1) {
   if (!Number.isFinite(value)) return "–";
   return new Intl.NumberFormat("nl-NL", { maximumFractionDigits: digits, minimumFractionDigits: digits }).format(value);
-}
-
-function scoreConditions(wave, weather) {
-  const height = wave?.waveHeight ?? 0;
-  const period = wave?.wavePeriod ?? 0;
-  const waveDirection = wave?.waveDirection ?? 0;
-  const windSpeed = weather?.windSpeed ?? 99;
-  const windDirection = weather?.windDirection ?? 270;
-
-  let score = 0;
-  if (height >= 0.55 && height <= 2.4) score += height <= 1.6 ? 28 : 21;
-  else if (height >= 0.35 && height <= 3) score += 12;
-  if (period >= 8) score += 24;
-  else if (period >= 6.5) score += 17;
-  else if (period >= 5) score += 8;
-  const waveDiff = directionDifference(waveDirection, 285);
-  score += waveDiff <= 45 ? 20 : waveDiff <= 80 ? 12 : 3;
-  const offshoreDiff = directionDifference(windDirection, 95);
-  score += offshoreDiff <= 65 ? 16 : offshoreDiff <= 115 ? 9 : 1;
-  score += windSpeed <= 13 ? 12 : windSpeed <= 23 ? 8 : windSpeed <= 32 ? 3 : 0;
-  return Math.min(100, Math.round(score));
-}
-
-function scoreLabel(score) {
-  if (score >= 76) return ["Erg kansrijk", "excellent"];
-  if (score >= 61) return ["Kansrijk", "good"];
-  if (score >= 44) return ["Redelijk", "fair"];
-  return ["Weinig kans", "poor"];
 }
 
 function weatherForTime(time, weatherForecast) {

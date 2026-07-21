@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "data": "node scripts/fetch-data.mjs data/latest.json",
-    "check": "node --check app.js && node --check scripts/fetch-data.mjs",
+    "check": "node --check app.js && node --check scoring.js && node --check scripts/fetch-data.mjs && node scripts/check-score.mjs",
     "serve": "python3 -m http.server 4173"
   },
   "engines": {

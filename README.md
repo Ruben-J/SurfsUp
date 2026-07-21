@@ -10,6 +10,8 @@ Een rustig, mobielvriendelijk surf-dashboard voor de Maasvlakte. De site combine
 - Maanstand en verlichting.
 - Een surfscore die golfhoogte, periode, richting en wind combineert.
 
+De score beloont vooral de combinatie van bruikbare golfhoogte, een langere periode, westelijke tot noordwestelijke deining en lichte offshore wind. Een korte periode, zeer kleine golven of harde wind begrenzen de totaalscore, zodat één gunstige waarde de rest niet kan compenseren.
+
 De score is nadrukkelijk een indicatie en geen veiligheidsadvies.
 
 ## Databronnen
