@@ -2,6 +2,13 @@ export function directionDifference(a, b) {
   return 180 - Math.abs(Math.abs(a - b) - 180);
 }
 
+export function beaufort(speedKmh) {
+  if (!Number.isFinite(speedKmh)) return null;
+  const thresholds = [1, 6, 12, 20, 29, 39, 50, 62, 75, 89, 103, 118];
+  const force = thresholds.findIndex((limit) => speedKmh < limit);
+  return force === -1 ? 12 : force;
+}
+
 function heightScore(height) {
   if (height < 0.35) return 2;
   if (height < 0.55) return 8;

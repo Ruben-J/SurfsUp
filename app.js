@@ -1,4 +1,4 @@
-import { directionDifference, scoreConditions, scoreLabel } from "./scoring.js";
+import { beaufort, directionDifference, scoreConditions, scoreLabel } from "./scoring.js";
 
 const state = { data: null, history: null, activeBuoy: "e13", historyHours: 24, chartPoints: [] };
 
@@ -141,7 +141,7 @@ function dayCardMarkup(day) {
     <div class="day-facts">
       <span><b>${round(day.best.waveHeight, 1)} m</b> golf</span>
       <span><b>${round(day.best.wavePeriod, 1)} s</b> periode</span>
-      <span><b>${directionName(day.best.weather?.windDirection)} ${round(day.best.weather?.windSpeed, 0)}</b> km/u wind</span>
+      <span><b>${directionName(day.best.weather?.windDirection)} ${beaufort(day.best.weather?.windSpeed)}</b> Bft wind</span>
     </div>
   </article>`;
 }
@@ -181,7 +181,7 @@ function renderHero() {
   document.querySelector("#condition-chips").innerHTML = [
     `<span class="condition-chip ${current.waveHeight >= .55 ? "good" : "warn"}">${round(current.waveHeight)} m golven</span>`,
     `<span class="condition-chip ${current.wavePeriod >= 7 ? "good" : "warn"}">${round(current.wavePeriod)} s periode</span>`,
-    `<span class="condition-chip ${directionDifference(current.weather.windDirection, 95) <= 65 ? "good" : "warn"}">${directionName(current.weather.windDirection)} ${round(current.weather.windSpeed, 0)} km/u</span>`,
+    `<span class="condition-chip ${directionDifference(current.weather.windDirection, 95) <= 65 ? "good" : "warn"}">${directionName(current.weather.windDirection)} ${beaufort(current.weather.windSpeed)} Bft</span>`,
   ].join("");
   document.querySelector("#best-window strong").textContent = `${fmt.dateTime.format(parseTime(best.time))} · score ${best.score}`;
   document.querySelector("#surf-card").classList.remove("loading");
@@ -191,7 +191,7 @@ function renderHero() {
   document.querySelector("#hero-meta").innerHTML = `
     <span><strong>${round(measured.value, 2)} m</strong> gemeten bij E13</span>
     <span class="meta-divider"></span>
-    <span><strong>${round(state.data.maasvlakte.windSpeed, 0)} km/u</strong> wind uit ${directionName(state.data.maasvlakte.windDirection)}</span>
+    <span><strong>${beaufort(state.data.maasvlakte.windSpeed)} Bft</strong> wind uit ${directionName(state.data.maasvlakte.windDirection)}</span>
     <span class="meta-divider"></span>
     <span>Bijgewerkt ${fmt.time.format(new Date(state.data.generatedAt))}</span>`;
 }
@@ -216,7 +216,7 @@ function metricMarkup(key, label, metric) {
   const display = metric.value == null ? "–" : isDirection ? directionName(metric.value) : round(metric.value, metric.unit === "m" ? 2 : 1);
   const model = metric.source.includes("model") ? " *" : "";
   const arrow = isDirection && metric.value != null
-    ? `<span class="direction-arrow" style="--direction:${metric.value}deg" aria-label="${Math.round(metric.value)} graden">↑</span>`
+    ? `<span class="direction-arrow" style="--direction:${(metric.value + 180) % 360}deg" aria-label="Komt uit ${directionName(metric.value)}, beweegt naar ${directionName((metric.value + 180) % 360)}">↑</span>`
     : "";
   return `<div class="metric" title="Bron: ${metric.source}">
     <span class="metric-label">${label}${model}</span>
@@ -326,7 +326,7 @@ function setupChartInteractions() {
     hoverDot.classList.add("visible");
     const wind = point.weather;
     const direction = Number.isFinite(point.direction) ? `${directionName(point.direction)} · ${Math.round(point.direction)}°` : "–";
-    const windText = wind ? `${directionName(wind.windDirection)} ${round(wind.windSpeed, 0)} km/u` : "–";
+    const windText = wind ? `${directionName(wind.windDirection)} ${beaufort(wind.windSpeed)} Bft` : "–";
     readout.innerHTML = `<strong>${fmt.dateTime.format(parseTime(point.time))}</strong><span>${point.type === "history" ? "Gemeten" : "Verwachting"}</span><span><b>${round(point.height, 2)} m</b> golf</span><span><b>${round(point.period)} s</b> periode</span><span><b>${direction}</b> richting</span><span><b>${windText}</b> wind</span>`;
   };
   chart.addEventListener("pointermove", showPoint);
@@ -377,8 +377,8 @@ function renderCoast() {
     <article class="coast-card weather-card">
       <h3>Weer & water <span>☼</span></h3>
       <div class="weather-main">
-        <div class="weather-value"><span>Wind</span><strong>${round(coast.windSpeed, 0)} <small>km/u</small></strong><small>vlagen ${round(coast.windGust, 0)} km/u</small></div>
-        <div class="weather-value"><span>Richting</span><strong>${directionName(coast.windDirection)} <i class="wind-compass" style="--direction:${coast.windDirection}deg">↑</i></strong><small>${Math.round(coast.windDirection)}°</small></div>
+        <div class="weather-value"><span>Wind</span><strong>${beaufort(coast.windSpeed)} <small>Bft</small></strong><small>vlagen ${beaufort(coast.windGust)} Bft</small></div>
+        <div class="weather-value"><span>Richting</span><strong>${directionName(coast.windDirection)} <i class="wind-compass" style="--direction:${(coast.windDirection + 180) % 360}deg" aria-label="Wind uit ${directionName(coast.windDirection)}, waait naar ${directionName((coast.windDirection + 180) % 360)}">↑</i></strong><small>${Math.round(coast.windDirection)}°</small></div>
         <div class="weather-value"><span>Luchttemperatuur</span><strong>${round(coast.airTemperature)}°</strong><small>Celsius</small></div>
         <div class="weather-value"><span>Zeewater</span><strong>${round(coast.seaTemperature)}°</strong><small>meting Hoek v. Holland</small></div>
       </div>

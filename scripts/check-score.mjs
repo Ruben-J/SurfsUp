@@ -1,5 +1,14 @@
 import assert from "node:assert/strict";
-import { scoreConditions, scoreLabel } from "../scoring.js";
+import { beaufort, scoreConditions, scoreLabel } from "../scoring.js";
+
+assert.equal(beaufort(0), 0);
+assert.equal(beaufort(1), 1);
+assert.equal(beaufort(5.9), 1);
+assert.equal(beaufort(6), 2);
+assert.equal(beaufort(17), 3);
+assert.equal(beaufort(20), 4);
+assert.equal(beaufort(118), 12);
+assert.equal(beaufort(null), null);
 
 const score = (waveHeight, wavePeriod, waveDirection, windSpeed, windDirection) =>
   scoreConditions(
