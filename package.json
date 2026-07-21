@@ -1,0 +1,14 @@
+{
+  "name": "surfs-up",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "data": "node scripts/fetch-data.mjs data/latest.json",
+    "check": "node --check app.js && node --check scripts/fetch-data.mjs",
+    "serve": "python3 -m http.server 4173"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

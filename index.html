@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#073f4c" />
+    <meta
+      name="description"
+      content="Actuele golf-, wind- en getijdata voor surfers bij de Maasvlakte."
+    />
+    <title>SurfsUp — Maasvlakte surfcondities</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌊</text></svg>" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Naar de actuele condities</a>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="SurfsUp home">
+        <span class="brand-mark" aria-hidden="true">S</span>
+        <span>Surfs<span>Up</span></span>
+      </a>
+      <nav aria-label="Hoofdnavigatie">
+        <a href="#boeien">Boeien</a>
+        <a href="#maasvlakte">Maasvlakte</a>
+        <a href="#uitleg">Uitleg</a>
+      </nav>
+      <div class="live-pill"><span></span> Actuele data</div>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top">
+        <div class="hero-copy">
+          <p class="eyebrow">Surfcheck · Maasvlakte</p>
+          <h1>Is het tijd om<br /><em>het water in te gaan?</em></h1>
+          <p class="hero-intro">
+            Metingen van drie Noordzeeboeien, getij en wind samengebracht in één heldere surfcheck.
+          </p>
+          <div class="hero-meta" id="hero-meta" aria-live="polite">
+            <span class="loading-line">Surfcondities worden opgehaald…</span>
+          </div>
+        </div>
+        <aside class="surf-card loading" id="surf-card" aria-label="Surfadvies">
+          <div class="surf-card-top">
+            <span class="status-dot"></span>
+            <span>Surfinschatting</span>
+            <span class="info" title="Indicatie op basis van golf, periode, richting en wind">i</span>
+          </div>
+          <div class="score-wrap">
+            <div>
+              <strong id="score-value">–</strong><span>/100</span>
+            </div>
+            <p id="score-label">Even geduld</p>
+          </div>
+          <div class="score-bar"><span id="score-bar"></span></div>
+          <p class="score-summary" id="score-summary">We combineren de nieuwste metingen en verwachtingen.</p>
+          <div class="condition-chips" id="condition-chips"></div>
+          <div class="best-window" id="best-window">
+            <span>Beste moment komende 48 uur</span>
+            <strong>Wordt berekend…</strong>
+          </div>
+        </aside>
+      </section>
+
+      <section class="section buoy-section" id="boeien">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Live vanaf de Noordzee</p>
+            <h2>Wat doen de golven?</h2>
+          </div>
+          <p>Meetdata van Rijkswaterstaat, aangevuld met een model voor de deiningsperiode en forecast.</p>
+        </div>
+
+        <div class="buoy-tabs" id="buoy-tabs" role="tablist" aria-label="Kies een boei"></div>
+        <article class="buoy-panel" id="buoy-panel" aria-live="polite">
+          <div class="panel-skeleton"></div>
+        </article>
+      </section>
+
+      <section class="section maasvlakte-section" id="maasvlakte">
+        <div class="section-heading light">
+          <div>
+            <p class="eyebrow">Aan de kust</p>
+            <h2>Maasvlakte nu</h2>
+          </div>
+          <p>Wind, temperatuur, astronomisch getij en maanstand bij elkaar.</p>
+        </div>
+        <div class="coast-grid" id="coast-grid">
+          <div class="coast-card loading-card"></div>
+          <div class="coast-card loading-card"></div>
+          <div class="coast-card loading-card"></div>
+        </div>
+      </section>
+
+      <section class="section explainer" id="uitleg">
+        <div class="explain-lead">
+          <p class="eyebrow">Slimmer naar zee</p>
+          <h2>Wanneer zijn de golven goed?</h2>
+          <p>
+            Voor de westgerichte kust van de Maasvlakte is een deining uit west tot noordwest meestal gunstig.
+            Een langere periode geeft doorgaans krachtigere, beter geordende golven. Wind uit oostelijke richting
+            waait van land naar zee en maakt het golfvlak vaak schoner.
+          </p>
+        </div>
+        <div class="factor-list">
+          <article>
+            <span class="factor-icon">↗</span>
+            <div><strong>Richting</strong><p>W–NW deining bereikt de kust het meest direct.</p></div>
+          </article>
+          <article>
+            <span class="factor-icon">≈</span>
+            <div><strong>Periode</strong><p>Vanaf circa 7 seconden komt er meer lijn en kracht in de sets.</p></div>
+          </article>
+          <article>
+            <span class="factor-icon">→</span>
+            <div><strong>Wind</strong><p>Oostelijke, niet te harde wind is meestal het schoonst.</p></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="data-note">
+        <div>
+          <strong>Goed om te weten</strong>
+          <p>
+            De surfscore is een praktische indicatie, geen veiligheidsadvies. Controleer ter plaatse altijd
+            stroming, wind, verboden zones en je eigen niveau. Boeidata kan tijdelijk ontbreken of vertraging hebben.
+          </p>
+        </div>
+        <div class="source-list">
+          <span>Bronnen</span>
+          <a href="https://rijkswaterstaatdata.nl/waterdata/" target="_blank" rel="noreferrer">Rijkswaterstaat ↗</a>
+          <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo ↗</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <a class="brand footer-brand" href="#top"><span class="brand-mark">S</span> Surfs<span>Up</span></a>
+      <p>Gebouwd voor surfers die liever golven pakken dan tabbladen openen.</p>
+      <p id="footer-update">Laatste update: –</p>
+    </footer>
+
+    <template id="error-template">
+      <div class="error-state">
+        <span>🌫️</span>
+        <h3>De zee houdt haar kaarten even tegen de borst</h3>
+        <p>De actuele gegevens konden niet worden geladen. Probeer de pagina straks opnieuw.</p>
+      </div>
+    </template>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
