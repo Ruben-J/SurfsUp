@@ -267,31 +267,37 @@ function chartMarkup(buoy) {
   const height = 220;
   const pad = { left: 34, right: 42, top: 14, bottom: 28 };
   const maxY = Math.max(1, Math.ceil(Math.max(...points.map((point) => point.height || 0)) * 2) / 2);
-  const x = (index) => pad.left + (index / (points.length - 1)) * (width - pad.left - pad.right);
+  const pointTimes = points.map((point) => parseTime(point.time)?.getTime()).filter(Number.isFinite);
+  const firstPointTime = Math.min(...pointTimes);
+  const lastPointTime = Math.max(...pointTimes);
+  const timeSpan = Math.max(1, lastPointTime - firstPointTime);
+  const x = (point) => {
+    const timestamp = parseTime(point.time)?.getTime() ?? firstPointTime;
+    return pad.left + ((timestamp - firstPointTime) / timeSpan) * (width - pad.left - pad.right);
+  };
   const y = (value) => pad.top + (1 - (value || 0) / maxY) * (height - pad.top - pad.bottom);
   const scoreY = (value) => pad.top + (1 - (value || 0) / 100) * (height - pad.top - pad.bottom);
-  const line = (items, offset, key, scale = y) => items.map((item, index) => `${index ? "L" : "M"}${x(index + offset).toFixed(1)},${scale(item[key]).toFixed(1)}`).join(" ");
+  const line = (items, key, scale = y) => items.map((item, index) => `${index ? "L" : "M"}${x(item).toFixed(1)},${scale(item[key]).toFixed(1)}`).join(" ");
   const lineWithGaps = (items, key, scale = y) => {
     let drawing = false;
-    return items.map((item, index) => {
+    return items.map((item) => {
       if (!Number.isFinite(item[key])) {
         drawing = false;
         return "";
       }
       const command = drawing ? "L" : "M";
       drawing = true;
-      return `${command}${x(index).toFixed(1)},${scale(item[key]).toFixed(1)}`;
+      return `${command}${x(item).toFixed(1)},${scale(item[key]).toFixed(1)}`;
     }).join(" ");
   };
-  const historyPath = line(historyPoints, 0, "height");
+  const historyPath = line(historyPoints, "height");
   const bridge = forecastPoints.length && historyPoints.length ? [historyPoints.at(-1), ...forecastPoints] : forecastPoints;
-  const forecastOffset = Math.max(0, historyPoints.length - 1);
-  const forecastPath = line(bridge, forecastOffset, "height");
+  const forecastPath = line(bridge, "height");
   // RWS HTE3 is low-frequency swell (10–33 s). Open-Meteo's swell partition
   // also contains much shorter waves, so it must not continue the same line.
   const swellPath = lineWithGaps(historyPoints, "swell");
-  const scorePath = line(points, 0, "score", scoreY);
-  const nowX = x(Math.max(0, historyPoints.length - 1));
+  const scorePath = line(points, "score", scoreY);
+  const nowX = x(historyPoints.at(-1) || points[0]);
   const grid = [0, .5, 1].map((ratio) => {
     const value = maxY * ratio;
     return `<line class="grid-line" x1="${pad.left}" x2="${width - pad.right}" y1="${y(value)}" y2="${y(value)}" />
@@ -305,10 +311,10 @@ function chartMarkup(buoy) {
     const label = state.historyHours > 24
       ? new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short" }).format(date)
       : new Intl.DateTimeFormat("nl-NL", { weekday: "short", hour: "2-digit" }).format(date);
-    return `<text class="axis-label" text-anchor="middle" x="${x(index)}" y="216">${label}</text>`;
+    return `<text class="axis-label" text-anchor="middle" x="${x(point)}" y="216">${label}</text>`;
   }).join("");
-  const area = historyPoints.length > 1 ? `${historyPath} L${x(historyPoints.length - 1)},${y(0)} L${x(0)},${y(0)} Z` : "";
-  state.chartPoints = points.map((point, index) => ({ ...point, x: x(index), y: y(point.height), scoreY: scoreY(point.score) }));
+  const area = historyPoints.length > 1 ? `${historyPath} L${x(historyPoints.at(-1))},${y(0)} L${x(historyPoints[0])},${y(0)} Z` : "";
+  state.chartPoints = points.map((point) => ({ ...point, x: x(point), y: y(point.height), scoreY: scoreY(point.score) }));
   const rangeButtons = [[24, "24 uur"], [168, "7 dagen"], [720, "30 dagen"]].map(([hours, label]) => `
     <button class="range-button" data-range-hours="${hours}" aria-pressed="${state.historyHours === hours}">${label}</button>`).join("");
 
