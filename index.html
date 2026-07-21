@@ -20,6 +20,7 @@
         <span>Surfs<span>Up</span></span>
       </a>
       <nav aria-label="Hoofdnavigatie">
+        <a href="#surfverwachting">5 dagen</a>
         <a href="#boeien">Boeien</a>
         <a href="#maasvlakte">Maasvlakte</a>
         <a href="#uitleg">Uitleg</a>
@@ -59,6 +60,18 @@
             <strong>Wordt berekend…</strong>
           </div>
         </aside>
+      </section>
+
+      <section class="surf-days-section" id="surfverwachting" aria-labelledby="surf-days-title">
+        <div class="surf-days-heading">
+          <div>
+            <p class="eyebrow">Terugblik & vooruitblik</p>
+            <h2 id="surf-days-title">Surfinschatting rond vandaag</h2>
+          </div>
+          <p>Het beste surfmoment per dag, berekend met golfhoogte, periode, richting en wind.</p>
+        </div>
+        <div class="five-day-outlook loading-card" id="five-day-outlook" aria-live="polite" aria-busy="true"></div>
+        <p class="surf-days-note">Vorige dagen zijn gebaseerd op metingen. Vandaag en komende dagen gebruiken de actuele verwachting.</p>
       </section>
 
       <section class="section buoy-section" id="boeien">

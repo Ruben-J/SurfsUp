@@ -19,6 +19,12 @@ const fmt = {
     hour: "2-digit",
     minute: "2-digit",
   }),
+  day: new Intl.DateTimeFormat("nl-NL", {
+    timeZone: "Europe/Amsterdam",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }),
 };
 
 const METRICS = [
@@ -48,6 +54,27 @@ function round(value, digits = 1) {
   return new Intl.NumberFormat("nl-NL", { maximumFractionDigits: digits, minimumFractionDigits: digits }).format(value);
 }
 
+function localDayKey(date) {
+  const parts = new Intl.DateTimeFormat("nl-NL", {
+    timeZone: "Europe/Amsterdam",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const value = (type) => parts.find((part) => part.type === type)?.value;
+  return `${value("year")}-${value("month")}-${value("day")}`;
+}
+
+function dayKeyForTime(value) {
+  if (!value) return "";
+  return /Z$|[+-]\d\d:\d\d$/.test(value) ? localDayKey(parseTime(value)) : value.slice(0, 10);
+}
+
+function dayAtOffset(reference, offset) {
+  const [year, month, day] = localDayKey(reference).split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + offset, 12));
+}
+
 function weatherForTime(time, weatherForecast) {
   if (!weatherForecast?.length) return null;
   const exact = weatherForecast.find((item) => item.time === time);
@@ -65,6 +92,69 @@ function buildOutlook(data) {
     const weather = weatherForTime(wave.time, data.maasvlakte.weatherForecast);
     return { ...wave, weather, score: scoreConditions(wave, weather) };
   });
+}
+
+function buildFiveDayOutlook() {
+  const e13 = state.data.buoys.find((buoy) => buoy.id === "e13") || state.data.buoys[0];
+  const history = state.history?.buoys?.find((buoy) => buoy.id === e13.id)?.series || [];
+  const measured = history.map((wave) => ({
+    ...wave,
+    weather: weatherForTime(wave.time, state.history?.weather),
+    source: "measured",
+  }));
+  const forecast = e13.forecast.map((wave) => ({
+    ...wave,
+    weather: weatherForTime(wave.time, state.data.maasvlakte.weatherForecast),
+    source: "forecast",
+  }));
+  const reference = new Date(state.data.generatedAt);
+
+  return [-2, -1, 0, 1, 2].map((offset) => {
+    const date = dayAtOffset(reference, offset);
+    const key = localDayKey(date);
+    const pool = offset < 0 ? measured : forecast;
+    const candidates = pool
+      .filter((point) => dayKeyForTime(point.time) === key)
+      .map((point) => ({ ...point, score: scoreConditions(point, point.weather) }));
+    const best = candidates.reduce((winner, point) => (!winner || point.score > winner.score ? point : winner), null);
+    return { offset, date, key, best };
+  });
+}
+
+function dayCardMarkup(day) {
+  const relativeLabels = { "-2": "Eergisteren", "-1": "Gisteren", 0: "Vandaag", 1: "Morgen", 2: "Overmorgen" };
+  const relativeLabel = relativeLabels[day.offset];
+  const className = day.offset < 0 ? "past" : day.offset > 0 ? "future" : "today";
+  if (!day.best) {
+    return `<article class="surf-day ${className} no-data" ${day.offset === 0 ? 'aria-current="date"' : ""}>
+      <div class="surf-day-head"><span>${relativeLabel}</span><time datetime="${day.key}">${fmt.day.format(day.date)}</time></div>
+      <p>Geen bruikbare gegevens voor deze dag.</p>
+    </article>`;
+  }
+  const [label, tone] = scoreLabel(day.best.score);
+  const momentLabel = day.offset < 0 ? "Beste gemeten moment" : day.offset === 0 ? "Beste kans vandaag" : "Beste verwachte moment";
+  return `<article class="surf-day ${className}" ${day.offset === 0 ? 'aria-current="date"' : ""}>
+    <div class="surf-day-head"><span>${relativeLabel}</span><time datetime="${day.key}">${fmt.day.format(day.date)}</time></div>
+    <div class="day-score ${tone}"><strong>${day.best.score}</strong><span>/100</span></div>
+    <p class="day-rating">${label}</p>
+    <div class="day-best"><span>${momentLabel}</span><strong>${fmt.time.format(parseTime(day.best.time))}</strong></div>
+    <div class="day-facts">
+      <span><b>${round(day.best.waveHeight, 1)} m</b> golf</span>
+      <span><b>${round(day.best.wavePeriod, 1)} s</b> periode</span>
+      <span><b>${directionName(day.best.weather?.windDirection)} ${round(day.best.weather?.windSpeed, 0)}</b> km/u wind</span>
+    </div>
+  </article>`;
+}
+
+function renderFiveDayOutlook() {
+  const container = document.querySelector("#five-day-outlook");
+  container.innerHTML = buildFiveDayOutlook().map(dayCardMarkup).join("");
+  container.classList.remove("loading-card");
+  container.setAttribute("aria-busy", "false");
+  const today = container.querySelector(".surf-day.today");
+  if (today && container.scrollWidth > container.clientWidth) {
+    container.scrollLeft = today.offsetLeft - (container.clientWidth - today.clientWidth) / 2;
+  }
 }
 
 function explainScore(point) {
@@ -306,6 +396,7 @@ function showError(error) {
   document.querySelector("#buoy-panel").replaceChildren(template.content.cloneNode(true));
   document.querySelector("#hero-meta").textContent = "Actuele gegevens zijn tijdelijk niet bereikbaar.";
   document.querySelector("#coast-grid").replaceChildren(template.content.cloneNode(true));
+  document.querySelector("#five-day-outlook").textContent = "De vijfdaagse surfinschatting kan tijdelijk niet worden berekend.";
 }
 
 async function init() {
@@ -318,6 +409,7 @@ async function init() {
     state.data = await latestResponse.json();
     if (historyResponse?.ok) state.history = await historyResponse.json();
     renderHero();
+    renderFiveDayOutlook();
     renderTabs();
     renderBuoy();
     renderCoast();

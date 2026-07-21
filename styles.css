@@ -101,6 +101,43 @@ h1 em { color: var(--lime); font-family: Georgia, "Times New Roman", serif; font
 .best-window { padding: 17px 18px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; color: rgba(255,255,255,.65); background: rgba(255,255,255,.08); font-size: 11px; }
 .best-window strong { color: white; font-size: 13px; text-align: right; }
 
+.surf-days-section { padding: 92px max(5vw, 32px) 102px; background: #eef1e8; overflow: hidden; }
+.surf-days-heading { max-width: 1220px; margin: 0 auto 42px; display: flex; align-items: end; justify-content: space-between; gap: 40px; }
+.surf-days-heading h2 { max-width: 750px; margin: 0; font-size: clamp(39px, 5vw, 66px); line-height: .98; letter-spacing: -.055em; }
+.surf-days-heading > p { max-width: 410px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.65; }
+.five-day-outlook { max-width: 1220px; min-height: 340px; margin: 0 auto; display: grid; grid-template-columns: .82fr .94fr 1.22fr .94fr .82fr; align-items: center; gap: 13px; }
+.surf-day { min-width: 0; min-height: 245px; padding: 22px 19px; border: 1px solid var(--line); border-radius: 21px; background: rgba(251,250,245,.82); box-shadow: 0 16px 45px rgba(14,57,64,.07); }
+.surf-day:nth-child(1), .surf-day:nth-child(5) { opacity: .82; }
+.surf-day.today { min-height: 320px; padding: 28px; color: white; border-color: rgba(255,255,255,.18); background: linear-gradient(155deg, #073f4c, #0b6870); box-shadow: 0 28px 65px rgba(5,53,61,.25); transform: scale(1.045); position: relative; z-index: 2; }
+.surf-day-head { min-height: 44px; display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 10px; }
+.surf-day-head span { color: var(--sea); font-weight: 850; text-transform: uppercase; letter-spacing: .11em; }
+.surf-day-head time { text-align: right; }
+.today .surf-day-head { color: rgba(255,255,255,.55); }
+.today .surf-day-head span { color: var(--lime); }
+.day-score { display: flex; align-items: baseline; margin-top: 11px; color: var(--sea); }
+.day-score strong { font-size: 50px; line-height: .9; letter-spacing: -.07em; }
+.day-score span { margin-left: 4px; color: var(--muted); font-size: 11px; }
+.day-score.excellent, .day-score.good { color: #16887f; }
+.day-score.poor { color: #a65b4b; }
+.today .day-score { color: var(--lime); }
+.today .day-score strong { font-size: 78px; }
+.today .day-score span { color: rgba(255,255,255,.46); font-size: 14px; }
+.day-rating { margin: 8px 0 20px; color: var(--sea); font-family: Georgia, serif; font-size: 17px; font-style: italic; }
+.today .day-rating { color: var(--lime); font-size: 22px; }
+.day-best { padding-top: 15px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: end; gap: 10px; }
+.day-best span { color: var(--muted); font-size: 9px; line-height: 1.35; }
+.day-best strong { font-size: 15px; }
+.today .day-best { border-color: rgba(255,255,255,.14); }
+.today .day-best span { color: rgba(255,255,255,.55); }
+.day-facts { display: grid; gap: 5px; margin-top: 15px; color: var(--muted); font-size: 9px; }
+.day-facts span { display: flex; justify-content: space-between; gap: 8px; }
+.day-facts b { color: var(--ink); }
+.today .day-facts { color: rgba(255,255,255,.55); }
+.today .day-facts b { color: white; }
+.surf-day.no-data { display: flex; flex-direction: column; }
+.surf-day.no-data > p { margin: auto 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.surf-days-note { max-width: 1220px; margin: 24px auto 0; color: var(--muted); font-size: 10px; text-align: center; }
+
 .section { padding: 110px max(5vw, 32px); }
 .section-heading { max-width: 1220px; margin: 0 auto 45px; display: flex; align-items: end; justify-content: space-between; gap: 40px; }
 .section-heading h2, .explainer h2 { margin-bottom: 0; font-size: clamp(40px, 5vw, 67px); line-height: .98; letter-spacing: -.055em; }
@@ -203,6 +240,10 @@ footer p { margin: 0; }
 
 @media (max-width: 1040px) {
   .hero { grid-template-columns: 1fr .75fr; gap: 45px; }
+  .five-day-outlook { grid-template-columns: .9fr .95fr 1.15fr .95fr .9fr; gap: 8px; }
+  .surf-day { padding: 18px 14px; }
+  .surf-day.today { padding: 22px 18px; }
+  .day-score strong { font-size: 42px; }
   .metrics-grid { grid-template-columns: repeat(4, 1fr); }
   .coast-grid { grid-template-columns: 1fr 1fr; }
   .moon-card { grid-column: span 2; min-height: 250px; }
@@ -216,6 +257,15 @@ footer p { margin: 0; }
   h1 { font-size: clamp(50px, 15vw, 76px); }
   .hero-intro { font-size: 16px; }
   .surf-card { max-width: none; justify-self: stretch; padding: 23px; }
+  .surf-days-section { padding: 72px 0 78px; }
+  .surf-days-heading { display: block; padding: 0 20px; margin-bottom: 30px; }
+  .surf-days-heading > p { margin-top: 16px; }
+  .five-day-outlook { min-height: 330px; display: flex; align-items: center; gap: 10px; padding: 12px 20px 24px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .five-day-outlook::-webkit-scrollbar { display: none; }
+  .surf-day, .surf-day:nth-child(1), .surf-day:nth-child(5) { flex: 0 0 158px; min-height: 238px; opacity: 1; scroll-snap-align: center; }
+  .surf-day.today { flex-basis: 205px; min-height: 300px; padding: 24px 20px; transform: none; }
+  .today .day-score strong { font-size: 68px; }
+  .surf-days-note { padding: 0 24px; margin-top: 8px; }
   .section { padding: 78px 20px; }
   .section-heading { display: block; }
   .section-heading > p { margin-top: 18px; }
