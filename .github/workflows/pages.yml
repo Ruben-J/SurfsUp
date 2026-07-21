@@ -35,7 +35,7 @@ jobs:
         run: |
           mkdir -p _site/data
           cp index.html styles.css app.js scoring.js _site/
-          cp data/latest.json _site/data/
+          cp data/latest.json data/history.json data/archive.json _site/data/
           touch _site/.nojekyll
 
       - name: GitHub Pages instellen

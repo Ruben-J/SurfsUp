@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "data": "node scripts/fetch-data.mjs data/latest.json",
-    "check": "node --check app.js && node --check scoring.js && node --check scripts/fetch-data.mjs && node scripts/check-score.mjs",
+    "history": "node scripts/fetch-history.mjs data/history.json",
+    "archive": "node scripts/backfill-history.mjs data/archive.json",
+    "check": "node --check app.js && node --check scoring.js && node --check scripts/fetch-data.mjs && node --check scripts/fetch-history.mjs && node --check scripts/backfill-history.mjs && node scripts/check-score.mjs",
     "serve": "python3 -m http.server 4173"
   },
   "engines": {

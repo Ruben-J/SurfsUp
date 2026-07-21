@@ -1,6 +1,6 @@
 import { directionDifference, scoreConditions, scoreLabel } from "./scoring.js";
 
-const state = { data: null, activeBuoy: "e13" };
+const state = { data: null, history: null, activeBuoy: "e13", historyHours: 24, chartPoints: [] };
 
 const fmt = {
   time: new Intl.DateTimeFormat("nl-NL", { timeZone: "Europe/Amsterdam", hour: "2-digit", minute: "2-digit" }),
@@ -49,6 +49,7 @@ function round(value, digits = 1) {
 }
 
 function weatherForTime(time, weatherForecast) {
+  if (!weatherForecast?.length) return null;
   const exact = weatherForecast.find((item) => item.time === time);
   if (exact) return exact;
   const target = parseTime(time)?.getTime();
@@ -134,12 +135,35 @@ function metricMarkup(key, label, metric) {
 }
 
 function chartMarkup(buoy) {
-  const history = buoy.history.slice(-25);
-  const forecast = buoy.forecast.slice(0, 49);
-  const points = [
-    ...history.map((item) => ({ time: item.time, height: item.value, type: "history", swell: null })),
-    ...forecast.map((item) => ({ time: item.time, height: item.waveHeight, swell: item.swellHeight, type: "forecast" })),
-  ];
+  const storedHistory = state.history?.buoys?.find((item) => item.id === buoy.id)?.series;
+  const completeHistory = storedHistory?.length
+    ? storedHistory
+    : buoy.history.map((item) => ({ time: item.time, waveHeight: item.value }));
+  const lastHistoryTime = Math.max(...completeHistory.map((item) => parseTime(item.time)?.getTime() || 0));
+  const cutoff = lastHistoryTime - state.historyHours * 60 * 60 * 1000;
+  const history = completeHistory.filter((item) => (parseTime(item.time)?.getTime() || 0) >= cutoff);
+  const forecast = buoy.forecast
+    .filter((item) => (parseTime(item.time)?.getTime() || 0) > lastHistoryTime)
+    .slice(0, 72);
+  const historyPoints = history.map((item) => ({
+    time: item.time,
+    height: item.waveHeight,
+    period: item.wavePeriod,
+    direction: item.waveDirection,
+    swell: item.swellHeight,
+    type: "history",
+    weather: weatherForTime(item.time, state.history?.weather),
+  }));
+  const forecastPoints = forecast.map((item) => ({
+    time: item.time,
+    height: item.waveHeight,
+    period: item.wavePeriod,
+    direction: item.waveDirection,
+    swell: item.swellHeight,
+    type: "forecast",
+    weather: weatherForTime(item.time, state.data.maasvlakte.weatherForecast),
+  }));
+  const points = [...historyPoints, ...forecastPoints];
   if (points.length < 2) return `<p class="model-note">Er zijn nog niet genoeg punten voor de grafiek.</p>`;
   const width = 1000;
   const height = 220;
@@ -148,34 +172,79 @@ function chartMarkup(buoy) {
   const x = (index) => pad.left + (index / (points.length - 1)) * (width - pad.left - pad.right);
   const y = (value) => pad.top + (1 - (value || 0) / maxY) * (height - pad.top - pad.bottom);
   const line = (items, offset, key) => items.map((item, index) => `${index ? "L" : "M"}${x(index + offset).toFixed(1)},${y(item[key]).toFixed(1)}`).join(" ");
-  const historyPath = line(history.map((item) => ({ height: item.value })), 0, "height");
-  const bridge = forecast.length && history.length ? [{ waveHeight: history.at(-1).value }, ...forecast] : forecast;
-  const forecastOffset = Math.max(0, history.length - 1);
-  const forecastPath = line(bridge, forecastOffset, "waveHeight");
-  const swellPath = line(forecast, history.length, "swellHeight");
-  const nowX = x(Math.max(0, history.length - 1));
+  const historyPath = line(historyPoints, 0, "height");
+  const bridge = forecastPoints.length && historyPoints.length ? [historyPoints.at(-1), ...forecastPoints] : forecastPoints;
+  const forecastOffset = Math.max(0, historyPoints.length - 1);
+  const forecastPath = line(bridge, forecastOffset, "height");
+  const swellPath = line(points, 0, "swell");
+  const nowX = x(Math.max(0, historyPoints.length - 1));
   const grid = [0, .5, 1].map((ratio) => {
     const value = maxY * ratio;
     return `<line class="grid-line" x1="${pad.left}" x2="${width - pad.right}" y1="${y(value)}" y2="${y(value)}" />
       <text class="axis-label" x="0" y="${y(value) + 3}">${round(value)} m</text>`;
   }).join("");
+  const labelStep = Math.max(1, Math.ceil(points.length / 7));
   const labels = points.map((point, index) => {
-    if (index % 12 || index === points.length - 1) return "";
+    if (index % labelStep && index !== points.length - 1) return "";
     const date = parseTime(point.time);
-    const label = new Intl.DateTimeFormat("nl-NL", { weekday: "short", hour: "2-digit" }).format(date);
+    const label = state.historyHours > 24
+      ? new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short" }).format(date)
+      : new Intl.DateTimeFormat("nl-NL", { weekday: "short", hour: "2-digit" }).format(date);
     return `<text class="axis-label" text-anchor="middle" x="${x(index)}" y="216">${label}</text>`;
   }).join("");
-  const area = history.length > 1 ? `${historyPath} L${x(history.length - 1)},${y(0)} L${x(0)},${y(0)} Z` : "";
+  const area = historyPoints.length > 1 ? `${historyPath} L${x(historyPoints.length - 1)},${y(0)} L${x(0)},${y(0)} Z` : "";
+  state.chartPoints = points.map((point, index) => ({ ...point, x: x(index), y: y(point.height) }));
+  const rangeButtons = [[24, "24 uur"], [168, "7 dagen"], [720, "30 dagen"]].map(([hours, label]) => `
+    <button class="range-button" data-range-hours="${hours}" aria-pressed="${state.historyHours === hours}">${label}</button>`).join("");
 
   return `<div class="chart-wrap">
-    <div class="chart-head"><strong>Golfhoogte: historie & verwachting</strong><div class="chart-legend"><span>Meting</span><span class="forecast">Verwachting</span><span class="swell">Deining</span></div></div>
-    <svg class="wave-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Golfhoogte van de afgelopen 24 uur en verwachting voor 48 uur">
+    <div class="chart-head">
+      <div><strong>Golfhoogte: historie & verwachting</strong><div class="chart-legend"><span>Meting</span><span class="forecast">Verwachting</span><span class="swell">Deining</span></div></div>
+      <div class="range-switch" aria-label="Kies periode">${rangeButtons}</div>
+    </div>
+    <div class="chart-scroll">
+    <svg class="wave-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Golfhoogte van de afgelopen ${state.historyHours} uur en verwachting voor 72 uur">
       <defs><linearGradient id="historyGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c5d68" stop-opacity=".16"/><stop offset="1" stop-color="#0c5d68" stop-opacity="0"/></linearGradient></defs>
       ${grid}<path class="history-area" d="${area}"/><path class="history-line" d="${historyPath}"/><path class="forecast-line" d="${forecastPath}"/><path class="swell-line" d="${swellPath}"/>
       <line class="now-line" x1="${nowX}" x2="${nowX}" y1="${pad.top}" y2="${height-pad.bottom}"/><text class="now-label" x="${nowX+5}" y="12">Nu</text>${labels}
+      <line class="hover-line" x1="0" x2="0" y1="${pad.top}" y2="${height-pad.bottom}"/><circle class="hover-dot" cx="0" cy="0" r="5"/>
     </svg>
+    </div>
+    <div class="chart-readout" aria-live="polite"><span>Beweeg over de grafiek voor golfhoogte, periode, richting en wind.</span></div>
     <p class="model-note">* Modelwaarde. Metingen komen van Rijkswaterstaat; verwachting en ontbrekende deiningswaarden van Open-Meteo Marine.</p>
   </div>`;
+}
+
+function setupChartInteractions() {
+  const chart = document.querySelector(".wave-chart");
+  const readout = document.querySelector(".chart-readout");
+  const hoverLine = chart?.querySelector(".hover-line");
+  const hoverDot = chart?.querySelector(".hover-dot");
+  if (!chart || !readout || !hoverLine || !hoverDot || !state.chartPoints.length) return;
+
+  const showPoint = (event) => {
+    const rect = chart.getBoundingClientRect();
+    const viewX = ((event.clientX - rect.left) / rect.width) * 1000;
+    const point = state.chartPoints.reduce((nearest, item) => (
+      Math.abs(item.x - viewX) < Math.abs(nearest.x - viewX) ? item : nearest
+    ));
+    hoverLine.setAttribute("x1", point.x);
+    hoverLine.setAttribute("x2", point.x);
+    hoverDot.setAttribute("cx", point.x);
+    hoverDot.setAttribute("cy", point.y);
+    hoverLine.classList.add("visible");
+    hoverDot.classList.add("visible");
+    const wind = point.weather;
+    const direction = Number.isFinite(point.direction) ? `${directionName(point.direction)} · ${Math.round(point.direction)}°` : "–";
+    const windText = wind ? `${directionName(wind.windDirection)} ${round(wind.windSpeed, 0)} km/u` : "–";
+    readout.innerHTML = `<strong>${fmt.dateTime.format(parseTime(point.time))}</strong><span>${point.type === "history" ? "Gemeten" : "Verwachting"}</span><span><b>${round(point.height, 2)} m</b> golf</span><span><b>${round(point.period)} s</b> periode</span><span><b>${direction}</b> richting</span><span><b>${windText}</b> wind</span>`;
+  };
+  chart.addEventListener("pointermove", showPoint);
+  chart.addEventListener("click", showPoint);
+  chart.addEventListener("pointerleave", () => {
+    hoverLine.classList.remove("visible");
+    hoverDot.classList.remove("visible");
+  });
 }
 
 function renderBuoy() {
@@ -187,6 +256,13 @@ function renderBuoy() {
     </div>
     <div class="metrics-grid">${METRICS.map(([key, label]) => metricMarkup(key, label, buoy.metrics[key])).join("")}</div>
     ${chartMarkup(buoy)}`;
+  document.querySelectorAll("[data-range-hours]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.historyHours = Number(button.dataset.rangeHours);
+      renderBuoy();
+    });
+  });
+  setupChartInteractions();
 }
 
 function nextTide(type) {
@@ -234,9 +310,13 @@ function showError(error) {
 
 async function init() {
   try {
-    const response = await fetch(`data/latest.json?v=${Date.now()}`, { cache: "no-store" });
-    if (!response.ok) throw new Error(`Data laden mislukt (${response.status})`);
-    state.data = await response.json();
+    const [latestResponse, historyResponse] = await Promise.all([
+      fetch(`data/latest.json?v=${Date.now()}`, { cache: "no-store" }),
+      fetch(`data/history.json?v=${Date.now()}`, { cache: "no-store" }).catch(() => null),
+    ]);
+    if (!latestResponse.ok) throw new Error(`Data laden mislukt (${latestResponse.status})`);
+    state.data = await latestResponse.json();
+    if (historyResponse?.ok) state.history = await historyResponse.json();
     renderHero();
     renderTabs();
     renderBuoy();

@@ -120,20 +120,32 @@ h1 em { color: var(--lime); font-family: Georgia, "Times New Roman", serif; font
 .metric-value small { color: var(--muted); font-size: 12px; font-weight: 600; }
 .direction-arrow { display: inline-block; margin-left: 6px; color: var(--sea); transform: rotate(var(--direction)); transform-origin: center; font-size: 20px; }
 .chart-wrap { margin-top: 34px; }
-.chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.chart-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 14px; }
 .chart-head strong { font-size: 13px; }
-.chart-legend { display: flex; gap: 16px; color: var(--muted); font-size: 10px; }
+.chart-legend { display: flex; gap: 16px; margin-top: 8px; color: var(--muted); font-size: 10px; }
 .chart-legend span::before { content: ""; display: inline-block; width: 15px; height: 2px; margin: 0 6px 3px 0; background: var(--sea); }
-.chart-legend .forecast::before { background: var(--aqua); }
+.chart-legend .forecast::before { height: 0; border-top: 2px dashed var(--aqua); background: transparent; }
+.chart-legend .swell::before { height: 0; border-top: 2px dashed #e0a94d; background: transparent; }
+.range-switch { display: inline-flex; flex: 0 0 auto; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: #f1f5f3; }
+.range-button { min-height: 32px; padding: 6px 10px; border: 0; border-radius: 7px; color: var(--muted); background: transparent; cursor: pointer; font: inherit; font-size: 10px; font-weight: 750; white-space: nowrap; }
+.range-button[aria-pressed="true"] { color: white; background: var(--sea); box-shadow: 0 3px 9px rgba(10, 89, 99, .18); }
+.range-button:focus-visible { outline: 2px solid var(--aqua); outline-offset: 2px; }
+.chart-scroll { overflow-x: auto; }
 .wave-chart { width: 100%; min-height: 210px; display: block; overflow: visible; }
 .grid-line { stroke: rgba(11,38,48,.09); stroke-width: 1; }
 .axis-label { fill: #72858a; font-size: 9px; }
 .history-area { fill: url(#historyGradient); }
 .history-line { fill: none; stroke: var(--sea); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.forecast-line { fill: none; stroke: var(--aqua); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.forecast-line { fill: none; stroke: var(--aqua); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 8 6; }
 .swell-line { fill: none; stroke: #e0a94d; stroke-width: 2; stroke-dasharray: 5 5; }
 .now-line { stroke: rgba(11,38,48,.25); stroke-width: 1; stroke-dasharray: 3 4; }
 .now-label { fill: var(--sea); font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.hover-line { visibility: hidden; pointer-events: none; stroke: rgba(11,38,48,.32); stroke-width: 1; }
+.hover-dot { visibility: hidden; pointer-events: none; fill: white; stroke: var(--sea); stroke-width: 3; }
+.hover-line.visible, .hover-dot.visible { visibility: visible; }
+.chart-readout { min-height: 42px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-top: 10px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); background: #f7f9f8; font-size: 10px; }
+.chart-readout strong { color: var(--ink); }
+.chart-readout b { color: var(--sea); font-weight: 800; }
 .model-note { margin: 12px 0 0; color: var(--muted); font-size: 10px; }
 .panel-skeleton, .loading-card { min-height: 280px; border-radius: 16px; background: linear-gradient(100deg, rgba(10,89,99,.05) 20%, rgba(10,89,99,.12) 38%, rgba(10,89,99,.05) 56%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
 @keyframes shimmer { to { background-position-x: -200%; } }
@@ -211,9 +223,11 @@ footer p { margin: 0; }
   .buoy-title-row { display: block; }
   .source-badge { display: inline-block; }
   .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .metric:last-child:nth-child(odd) { grid-column: span 2; }
   .metric { min-height: 112px; }
   .metric-value { font-size: 26px; }
-  .chart-wrap { overflow-x: auto; }
+  .chart-head { align-items: flex-start; flex-direction: column; }
+  .chart-readout { align-items: flex-start; flex-direction: column; gap: 5px; }
   .wave-chart { min-width: 680px; }
   .coast-grid { grid-template-columns: 1fr; }
   .moon-card { grid-column: auto; }
