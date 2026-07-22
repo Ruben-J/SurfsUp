@@ -3,9 +3,9 @@ import { longSwellEstimate } from "../long-swell.js";
 import {
   beaufort,
   normalizeScoreWeights,
-  rebalanceScoreWeights,
   scoreConditions,
   scoreLabel,
+  updateScoreWeightWithinBudget,
 } from "../scoring.js";
 
 assert.equal(beaufort(0), 0);
@@ -52,17 +52,26 @@ assert.deepEqual(normalizeScoreWeights({
   windDirection: 0,
   windSpeed: 0,
 }), { height: 30, period: 25, waveDirection: 20, windDirection: 15, windSpeed: 10 });
-const rebalancedWeights = rebalanceScoreWeights(
+const freedWeights = updateScoreWeightWithinBudget(
   { height: 30, period: 25, waveDirection: 20, windDirection: 15, windSpeed: 10 },
-  "period",
-  50,
+  "height",
+  20,
 );
-assert.equal(rebalancedWeights.period, 50);
-assert.equal(Math.round(Object.values(rebalancedWeights).reduce((sum, value) => sum + value, 0)), 100);
-assert.ok(rebalancedWeights.height < 30);
-assert.ok(rebalancedWeights.waveDirection < 20);
-assert.ok(rebalancedWeights.windDirection < 15);
-assert.ok(rebalancedWeights.windSpeed < 10);
+assert.deepEqual(freedWeights, {
+  height: 20,
+  period: 25,
+  waveDirection: 20,
+  windDirection: 15,
+  windSpeed: 10,
+});
+const allocatedWeights = updateScoreWeightWithinBudget(freedWeights, "period", 40);
+assert.deepEqual(allocatedWeights, {
+  height: 20,
+  period: 35,
+  waveDirection: 20,
+  windDirection: 15,
+  windSpeed: 10,
+});
 
 const noLongSwell = longSwellEstimate({
   swell_wave_height: [1.2],
@@ -95,7 +104,8 @@ console.log("Surfscore-grensgevallen zijn geldig", {
   cleanSwell,
   tooWindy,
   periodOnly,
-  rebalancedWeights,
+  freedWeights,
+  allocatedWeights,
   noLongSwell,
   spectralTail,
   combinedLongSwell,

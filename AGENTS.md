@@ -109,7 +109,7 @@ Draai deze conventie niet terug zonder expliciete productbeslissing.
 
 De score beloont vooral bruikbare hoogte, langere periode, W–NW-deining en lichte offshore wind. Caps voorkomen dat korte windgolven, kleine golven of harde wind een onrealistisch hoge score krijgen.
 
-De standaardgewichten zijn golfhoogte 30, golfperiode 25, golfrichting 20, windrichting 15 en windsnelheid 10. Bezoekers kunnen deze relatieve gewichten aanpassen met de schuifregelaars in de uitlegsectie. `rebalanceScoreWeights()` houdt het totaal altijd op 100%: wanneer één balk stijgt, worden de overige gewichten proportioneel verlaagd. De voorkeur wordt lokaal opgeslagen onder `surfsup-score-weights-v1`. Een wijziging herberekent hero, vijfdaagse kaarten en uurgrafiek direct. De kwaliteitscaps blijven onafhankelijk van de gewichten actief. Het is nadrukkelijk geen kanspercentage.
+De standaardgewichten zijn golfhoogte 30, golfperiode 25, golfrichting 20, windrichting 15 en windsnelheid 10. Bezoekers kunnen deze exacte percentages aanpassen met de schuifregelaars in de uitlegsectie. Eerst moet een balk worden verlaagd om budget vrij te maken; `updateScoreWeightWithinBudget()` laat een andere balk alleen stijgen binnen dat vrije budget en wijzigt nooit automatisch de overige balken. De score wordt pas herberekend en de voorkeur pas lokaal opgeslagen onder `surfsup-score-weights-v2` wanneer alle 100% weer verdeeld is. De kwaliteitscaps blijven onafhankelijk van de gewichten actief. Het is nadrukkelijk geen kanspercentage.
 
 Voer na iedere scorewijziging `npm run check` uit en voeg nieuwe grensgevallen toe aan `scripts/check-score.mjs`.
 

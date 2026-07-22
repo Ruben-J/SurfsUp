@@ -2,34 +2,36 @@ import {
   beaufort,
   DEFAULT_SCORE_WEIGHTS,
   directionDifference,
-  normalizeScoreWeights,
-  rebalanceScoreWeights,
   scoreConditions,
   scoreLabel,
+  updateScoreWeightWithinBudget,
 } from "./scoring.js?v=__ASSET_VERSION__";
 
-const SCORE_SETTINGS_KEY = "surfsup-score-weights-v1";
+const SCORE_SETTINGS_KEY = "surfsup-score-weights-v2";
 
 function loadScoreWeights() {
   try {
     const stored = JSON.parse(localStorage.getItem(SCORE_SETTINGS_KEY));
     const values = Object.fromEntries(Object.entries(DEFAULT_SCORE_WEIGHTS).map(([key, defaultValue]) => {
       const value = Number(stored?.[key]);
-      return [key, Number.isFinite(value) && value >= 0 && value <= 100 ? value : defaultValue];
+      return [key, Number.isInteger(value) && value >= 0 && value <= 100 ? value : defaultValue];
     }));
-    return normalizeScoreWeights(values);
+    const total = Object.values(values).reduce((sum, value) => sum + value, 0);
+    return total === 100 ? values : { ...DEFAULT_SCORE_WEIGHTS };
   } catch {
     return { ...DEFAULT_SCORE_WEIGHTS };
   }
 }
 
+const savedScoreWeights = loadScoreWeights();
 const state = {
   data: null,
   history: null,
   activeBuoy: "e13",
   historyHours: 24,
   chartPoints: [],
-  scoreWeights: loadScoreWeights(),
+  scoreWeights: savedScoreWeights,
+  scoreWeightDraft: { ...savedScoreWeights },
 };
 
 const fmt = {
@@ -451,15 +453,21 @@ function saveScoreWeights() {
 }
 
 function renderScoreSettings() {
-  const normalized = normalizeScoreWeights(state.scoreWeights);
+  const total = Object.values(state.scoreWeightDraft).reduce((sum, value) => sum + value, 0);
+  const remaining = Math.max(0, 100 - total);
   document.querySelectorAll("[data-score-weight]").forEach((input) => {
     const key = input.dataset.scoreWeight;
-    input.value = normalized[key];
-    const percentage = Math.round(normalized[key]);
+    const percentage = state.scoreWeightDraft[key];
+    input.value = percentage;
     const output = document.querySelector(`[data-score-weight-value="${key}"]`);
     if (output) output.textContent = `${percentage}%`;
     input.setAttribute("aria-valuetext", `${percentage}% invloed`);
   });
+  const status = document.querySelector("#score-weight-status");
+  if (status) {
+    status.textContent = remaining > 0 ? `${remaining}% vrij te verdelen.` : "100% verdeeld.";
+    status.classList.toggle("pending", remaining > 0);
+  }
 }
 
 function refreshScoreViews() {
@@ -476,18 +484,23 @@ function setupScoreSettings() {
   controls?.addEventListener("input", (event) => {
     const input = event.target.closest("[data-score-weight]");
     if (!input) return;
-    state.scoreWeights = rebalanceScoreWeights(
-      state.scoreWeights,
+    state.scoreWeightDraft = updateScoreWeightWithinBudget(
+      state.scoreWeightDraft,
       input.dataset.scoreWeight,
       Number(input.value),
     );
-    saveScoreWeights();
     renderScoreSettings();
-    cancelAnimationFrame(renderFrame);
-    renderFrame = requestAnimationFrame(refreshScoreViews);
+    const total = Object.values(state.scoreWeightDraft).reduce((sum, value) => sum + value, 0);
+    if (total === 100) {
+      state.scoreWeights = { ...state.scoreWeightDraft };
+      saveScoreWeights();
+      cancelAnimationFrame(renderFrame);
+      renderFrame = requestAnimationFrame(refreshScoreViews);
+    }
   });
   reset?.addEventListener("click", () => {
     state.scoreWeights = { ...DEFAULT_SCORE_WEIGHTS };
+    state.scoreWeightDraft = { ...DEFAULT_SCORE_WEIGHTS };
     saveScoreWeights();
     renderScoreSettings();
     refreshScoreViews();

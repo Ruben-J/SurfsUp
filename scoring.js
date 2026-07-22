@@ -27,23 +27,18 @@ export function normalizeScoreWeights(weights = DEFAULT_SCORE_WEIGHTS) {
   return Object.fromEntries(Object.entries(values).map(([key, value]) => [key, (value / total) * 100]));
 }
 
-export function rebalanceScoreWeights(weights, changedKey, nextValue) {
-  const current = normalizeScoreWeights(weights);
+export function updateScoreWeightWithinBudget(weights, changedKey, nextValue) {
+  const current = Object.fromEntries(Object.entries(DEFAULT_SCORE_WEIGHTS).map(([key, defaultValue]) => {
+    const value = Number(weights?.[key]);
+    return [key, Number.isFinite(value) && value >= 0 && value <= 100 ? value : defaultValue];
+  }));
   if (!(changedKey in DEFAULT_SCORE_WEIGHTS)) return current;
-  const target = Math.max(0, Math.min(100, Number(nextValue) || 0));
-  const remaining = 100 - target;
-  const otherKeys = Object.keys(DEFAULT_SCORE_WEIGHTS).filter((key) => key !== changedKey);
-  const otherTotal = otherKeys.reduce((sum, key) => sum + current[key], 0);
-  const fallbackTotal = otherKeys.reduce((sum, key) => sum + DEFAULT_SCORE_WEIGHTS[key], 0);
-  const result = { [changedKey]: target };
-
-  for (const key of otherKeys) {
-    const share = otherTotal > 0
-      ? current[key] / otherTotal
-      : DEFAULT_SCORE_WEIGHTS[key] / fallbackTotal;
-    result[key] = share * remaining;
-  }
-  return result;
+  const otherTotal = Object.entries(current)
+    .filter(([key]) => key !== changedKey)
+    .reduce((sum, [, value]) => sum + value, 0);
+  const maximum = Math.max(0, 100 - otherTotal);
+  current[changedKey] = Math.max(0, Math.min(maximum, Math.round(Number(nextValue) || 0)));
+  return current;
 }
 
 function heightScore(height) {
