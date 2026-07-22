@@ -27,6 +27,25 @@ export function normalizeScoreWeights(weights = DEFAULT_SCORE_WEIGHTS) {
   return Object.fromEntries(Object.entries(values).map(([key, value]) => [key, (value / total) * 100]));
 }
 
+export function rebalanceScoreWeights(weights, changedKey, nextValue) {
+  const current = normalizeScoreWeights(weights);
+  if (!(changedKey in DEFAULT_SCORE_WEIGHTS)) return current;
+  const target = Math.max(0, Math.min(100, Number(nextValue) || 0));
+  const remaining = 100 - target;
+  const otherKeys = Object.keys(DEFAULT_SCORE_WEIGHTS).filter((key) => key !== changedKey);
+  const otherTotal = otherKeys.reduce((sum, key) => sum + current[key], 0);
+  const fallbackTotal = otherKeys.reduce((sum, key) => sum + DEFAULT_SCORE_WEIGHTS[key], 0);
+  const result = { [changedKey]: target };
+
+  for (const key of otherKeys) {
+    const share = otherTotal > 0
+      ? current[key] / otherTotal
+      : DEFAULT_SCORE_WEIGHTS[key] / fallbackTotal;
+    result[key] = share * remaining;
+  }
+  return result;
+}
+
 function heightScore(height) {
   if (height < 0.35) return 2;
   if (height < 0.55) return 8;

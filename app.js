@@ -3,6 +3,7 @@ import {
   DEFAULT_SCORE_WEIGHTS,
   directionDifference,
   normalizeScoreWeights,
+  rebalanceScoreWeights,
   scoreConditions,
   scoreLabel,
 } from "./scoring.js?v=__ASSET_VERSION__";
@@ -12,10 +13,11 @@ const SCORE_SETTINGS_KEY = "surfsup-score-weights-v1";
 function loadScoreWeights() {
   try {
     const stored = JSON.parse(localStorage.getItem(SCORE_SETTINGS_KEY));
-    return Object.fromEntries(Object.entries(DEFAULT_SCORE_WEIGHTS).map(([key, defaultValue]) => {
+    const values = Object.fromEntries(Object.entries(DEFAULT_SCORE_WEIGHTS).map(([key, defaultValue]) => {
       const value = Number(stored?.[key]);
-      return [key, Number.isFinite(value) && value >= 0 && value <= 50 ? value : defaultValue];
+      return [key, Number.isFinite(value) && value >= 0 && value <= 100 ? value : defaultValue];
     }));
+    return normalizeScoreWeights(values);
   } catch {
     return { ...DEFAULT_SCORE_WEIGHTS };
   }
@@ -452,7 +454,7 @@ function renderScoreSettings() {
   const normalized = normalizeScoreWeights(state.scoreWeights);
   document.querySelectorAll("[data-score-weight]").forEach((input) => {
     const key = input.dataset.scoreWeight;
-    input.value = state.scoreWeights[key];
+    input.value = normalized[key];
     const percentage = Math.round(normalized[key]);
     const output = document.querySelector(`[data-score-weight-value="${key}"]`);
     if (output) output.textContent = `${percentage}%`;
@@ -474,10 +476,11 @@ function setupScoreSettings() {
   controls?.addEventListener("input", (event) => {
     const input = event.target.closest("[data-score-weight]");
     if (!input) return;
-    state.scoreWeights = { ...state.scoreWeights, [input.dataset.scoreWeight]: Number(input.value) };
-    if (Object.values(state.scoreWeights).every((value) => value === 0)) {
-      state.scoreWeights[input.dataset.scoreWeight] = 1;
-    }
+    state.scoreWeights = rebalanceScoreWeights(
+      state.scoreWeights,
+      input.dataset.scoreWeight,
+      Number(input.value),
+    );
     saveScoreWeights();
     renderScoreSettings();
     cancelAnimationFrame(renderFrame);
