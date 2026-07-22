@@ -81,7 +81,7 @@ Golfhoogten van Rijkswaterstaat worden met factor `0.01` van centimeter naar met
 ### Open-Meteo
 
 - Marine API: golf- en deiningsforecast, deiningsperiode en model-fallbacks;
-- Weather API: wind, windvlagen en luchttemperatuur;
+- Weather API: wind, windvlagen, luchttemperatuur, zonsopkomst en zonsondergang;
 - de forecast gebruikt lokale tijden in `Europe/Amsterdam`.
 
 Zichtbare windsnelheden worden in Beaufort getoond. De ruwe km/u-waarde blijft behouden voor de scoreberekening. Verander de API-data daarom niet naar Beaufort.
@@ -109,6 +109,8 @@ Draai deze conventie niet terug zonder expliciete productbeslissing.
 
 De score beloont vooral bruikbare hoogte, langere periode, W–NW-deining en lichte offshore wind. Caps voorkomen dat korte windgolven, kleine golven of harde wind een onrealistisch hoge score krijgen.
 
+De uitleg op de pagina benoemt de maximale punten: golfhoogte 30, golfperiode 25, golfrichting 20, windrichting 15 en windsnelheid 10. Het is een gewogen score uit 100 en nadrukkelijk geen kanspercentage. Houd deze uitleg gelijk aan `scoring.js` wanneer de berekening verandert.
+
 Voer na iedere scorewijziging `npm run check` uit en voeg nieuwe grensgevallen toe aan `scripts/check-score.mjs`.
 
 ### Waarom twee scores voor “vandaag” soms verschillen
@@ -127,8 +129,11 @@ Als dit visueel verwarrend wordt, verduidelijk dan de labels “Nu” en “Best
 
 - eergisteren en gisteren: beste uur uit gemeten historie;
 - vandaag, morgen en overmorgen: beste uur uit de forecast;
+- een “beste moment” wordt alleen gekozen tussen zonsopkomst en zonsondergang;
 - vandaag staat visueel centraal en groter;
 - op mobiel is de horizontale kaartstrook automatisch op vandaag gecentreerd.
+
+`fetchWeather()` vraagt twee voorbije dagen op zodat de daglichtfilter ook werkt voor eergisteren en gisteren. `weatherForecast` mag daarom niet opnieuw tot de eerste 96 uur worden afgesneden; die reeks bevat nu zowel de benodigde voorbije uren als de forecast.
 
 ### Golf- en scoregrafiek
 
@@ -143,9 +148,13 @@ Bereiken: 24 uur, 7 dagen en 30 dagen historie, gevolgd door maximaal 72 uur for
 
 De horizontale as gebruikt de echte timestamp van ieder datapunt, niet de index in de array. Daardoor blijven lijn, hover en tijdlabels gelijklopen wanneer er een meetuur ontbreekt of er een gat tussen meting en forecast zit.
 
-De deiningslijn stopt bij de metingen. Trek deze niet door met `swell_wave_height` van Open-Meteo: RWS `HTE3` bevat alleen laagfrequente energie van 30–100 mHz (ongeveer 10–33 s), terwijl het model ook veel kortere golfcomponenten als swell indeelt. Eén doorlopende lijn zou daardoor onvergelijkbare waarden tonen en een misleidende sprong veroorzaken.
+Rijkswaterstaat biedt bij E13 geen `HTE3`-forecast aan. De grafiek toont daarom twee nadrukkelijk losse deiningslijnen: gemeten laagfrequente deining van RWS en modeldeining van Open-Meteo vanaf “Nu”. Verbind deze lijnen niet. RWS `HTE3` bevat alleen laagfrequente energie van 30–100 mHz (ongeveer 10–33 s), terwijl het model ook veel kortere golfcomponenten als swell indeelt; één doorlopende lijn zou onvergelijkbare waarden en een misleidende sprong tonen.
 
 De historische uur-score wordt berekend met boeihistorie plus de dichtstbijzijnde historische windmeting. De forecastscore gebruikt de weersverwachting bij hetzelfde uur.
+
+### Maasvlakte en daglicht
+
+De kaart “Weer & water” toont voor vandaag zon op en zon onder. Dezelfde `maasvlakte.daylight`-reeks begrenst het beste moment in de hero en in alle vijf dagkaarten. De actuele surfscore zelf blijft ook buiten daglicht zichtbaar; alleen de aanbeveling “beste moment” is gefilterd.
 
 ## Tijdzones
 

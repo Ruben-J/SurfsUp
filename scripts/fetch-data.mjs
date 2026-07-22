@@ -218,6 +218,7 @@ async function fetchWeather(lat, lon) {
     hourly: "temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m",
     daily: "sunrise,sunset",
     timezone: "Europe/Amsterdam",
+    past_days: "2",
     forecast_days: "4",
   });
   return fetchJson(`${WEATHER_URL}?${params}`);
@@ -327,7 +328,7 @@ function buildMaasvlakte(weather, seaTemperatureSeries, tides) {
     windSpeed: weather.current.wind_speed_10m,
     windGust: weather.current.wind_gusts_10m,
     windDirection: weather.current.wind_direction_10m,
-    weatherForecast: weather.hourly.time.slice(0, 96).map((time, hourlyIndex) => ({
+    weatherForecast: weather.hourly.time.map((time, hourlyIndex) => ({
       time,
       airTemperature: weather.hourly.temperature_2m[hourlyIndex],
       windSpeed: weather.hourly.wind_speed_10m[hourlyIndex],

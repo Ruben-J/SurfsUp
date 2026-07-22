@@ -70,6 +70,13 @@ function dayKeyForTime(value) {
   return /Z$|[+-]\d\d:\d\d$/.test(value) ? localDayKey(parseTime(value)) : value.slice(0, 10);
 }
 
+function isDuringDaylight(time, daylight) {
+  const day = daylight?.find((item) => item.date === dayKeyForTime(time));
+  if (!day?.sunrise || !day?.sunset) return false;
+  const timestamp = parseTime(time)?.getTime();
+  return timestamp >= parseTime(day.sunrise).getTime() && timestamp <= parseTime(day.sunset).getTime();
+}
+
 function dayAtOffset(reference, offset) {
   const [year, month, day] = localDayKey(reference).split("-").map(Number);
   return new Date(Date.UTC(year, month - 1, day + offset, 12));
@@ -115,6 +122,7 @@ function buildFiveDayOutlook() {
     const pool = offset < 0 ? measured : forecast;
     const candidates = pool
       .filter((point) => dayKeyForTime(point.time) === key)
+      .filter((point) => isDuringDaylight(point.time, state.data.maasvlakte.daylight))
       .map((point) => ({ ...point, score: scoreConditions(point, point.weather) }));
     const best = candidates.reduce((winner, point) => (!winner || point.score > winner.score ? point : winner), null);
     return { offset, date, key, best };
@@ -172,7 +180,8 @@ function explainScore(point) {
 function renderHero() {
   const outlook = buildOutlook(state.data);
   const current = outlook[0];
-  const best = outlook.reduce((winner, item) => (item.score > winner.score ? item : winner), current);
+  const daylightOutlook = outlook.filter((item) => isDuringDaylight(item.time, state.data.maasvlakte.daylight));
+  const best = daylightOutlook.reduce((winner, item) => (!winner || item.score > winner.score ? item : winner), null);
   const [label] = scoreLabel(current.score);
   document.querySelector("#score-value").textContent = current.score;
   document.querySelector("#score-label").textContent = label;
@@ -183,7 +192,9 @@ function renderHero() {
     `<span class="condition-chip ${current.wavePeriod >= 7 ? "good" : "warn"}">${round(current.wavePeriod)} s periode</span>`,
     `<span class="condition-chip ${directionDifference(current.weather.windDirection, 95) <= 65 ? "good" : "warn"}">${directionName(current.weather.windDirection)} ${beaufort(current.weather.windSpeed)} Bft</span>`,
   ].join("");
-  document.querySelector("#best-window strong").textContent = `${fmt.dateTime.format(parseTime(best.time))} · score ${best.score}`;
+  document.querySelector("#best-window strong").textContent = best
+    ? `${fmt.dateTime.format(parseTime(best.time))} · score ${best.score}`
+    : "Geen daglichtmoment beschikbaar";
   document.querySelector("#surf-card").classList.remove("loading");
 
   const e13 = state.data.buoys.find((buoy) => buoy.id === "e13");
@@ -243,6 +254,7 @@ function chartMarkup(buoy) {
       period: item.wavePeriod,
       direction: item.waveDirection,
       swell: item.swellHeight,
+      swellPeriod: item.swellPeriod,
       score: scoreConditions(item, weather),
       type: "history",
       weather,
@@ -256,6 +268,7 @@ function chartMarkup(buoy) {
       period: item.wavePeriod,
       direction: item.waveDirection,
       swell: item.swellHeight,
+      swellPeriod: item.swellPeriod,
       score: scoreConditions(item, weather),
       type: "forecast",
       weather,
@@ -296,6 +309,7 @@ function chartMarkup(buoy) {
   // RWS HTE3 is low-frequency swell (10–33 s). Open-Meteo's swell partition
   // also contains much shorter waves, so it must not continue the same line.
   const swellPath = lineWithGaps(historyPoints, "swell");
+  const modelSwellPath = lineWithGaps(forecastPoints, "swell");
   const scorePath = line(points, "score", scoreY);
   const nowX = x(historyPoints.at(-1) || points[0]);
   const grid = [0, .5, 1].map((ratio) => {
@@ -320,19 +334,19 @@ function chartMarkup(buoy) {
 
   return `<div class="chart-wrap">
     <div class="chart-head">
-      <div><strong>Golfhoogte & surfscore per uur</strong><div class="chart-legend"><span>Meting</span><span class="forecast">Verwachting</span><span class="swell">Lange deining (meting)</span><span class="score">Surfscore</span></div></div>
+      <div><strong>Golfhoogte & surfscore per uur</strong><div class="chart-legend"><span>Meting</span><span class="forecast">Verwachting</span><span class="swell">Lange deining (meting)</span><span class="model-swell">Modeldeining*</span><span class="score">Surfscore</span></div></div>
       <div class="range-switch" aria-label="Kies periode">${rangeButtons}</div>
     </div>
     <div class="chart-scroll">
-    <svg class="wave-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Golfhoogte en surfscore per uur van de afgelopen ${state.historyHours} uur en verwachting voor 72 uur">
+    <svg class="wave-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Golfhoogte, deining en surfscore per uur van de afgelopen ${state.historyHours} uur en verwachting voor 72 uur">
       <defs><linearGradient id="historyGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c5d68" stop-opacity=".16"/><stop offset="1" stop-color="#0c5d68" stop-opacity="0"/></linearGradient></defs>
-      ${grid}${scoreAxis}<path class="history-area" d="${area}"/><path class="history-line" d="${historyPath}"/><path class="forecast-line" d="${forecastPath}"/><path class="swell-line" d="${swellPath}"/><path class="score-line" d="${scorePath}"/>
+      ${grid}${scoreAxis}<path class="history-area" d="${area}"/><path class="history-line" d="${historyPath}"/><path class="forecast-line" d="${forecastPath}"/><path class="swell-line" d="${swellPath}"/><path class="model-swell-line" d="${modelSwellPath}"/><path class="score-line" d="${scorePath}"/>
       <line class="now-line" x1="${nowX}" x2="${nowX}" y1="${pad.top}" y2="${height-pad.bottom}"/><text class="now-label" x="${nowX+5}" y="12">Nu</text>${labels}
       <line class="hover-line" x1="0" x2="0" y1="${pad.top}" y2="${height-pad.bottom}"/><circle class="hover-dot" cx="0" cy="0" r="5"/><circle class="hover-score-dot" cx="0" cy="0" r="5"/>
     </svg>
     </div>
     <div class="chart-readout" aria-live="polite"><span>Beweeg over de grafiek voor de surfscore en condities per uur.</span></div>
-    <p class="model-note">* Modelwaarde. Golfverwachting van Open-Meteo Marine. De deiningslijn toont alleen de vergelijkbare laagfrequente Rijkswaterstaat-metingen; hiervoor is geen gelijkwaardige forecast beschikbaar.</p>
+    <p class="model-note">* Modelwaarde van Open-Meteo Marine. De modeldeining gebruikt een andere definitie dan de laagfrequente Rijkswaterstaat-meting en begint daarom als een losse lijn na “Nu”.</p>
   </div>`;
 }
 
@@ -362,7 +376,10 @@ function setupChartInteractions() {
     const wind = point.weather;
     const direction = Number.isFinite(point.direction) ? `${directionName(point.direction)} · ${Math.round(point.direction)}°` : "–";
     const windText = wind ? `${directionName(wind.windDirection)} ${beaufort(wind.windSpeed)} Bft` : "–";
-    readout.innerHTML = `<strong>${fmt.dateTime.format(parseTime(point.time))}</strong><span>${point.type === "history" ? "Gemeten" : "Verwachting"}</span><span class="score-readout"><b>${point.score}/100</b> surfscore</span><span><b>${round(point.height, 2)} m</b> golf</span><span><b>${round(point.period)} s</b> periode</span><span><b>${direction}</b> richting</span><span><b>${windText}</b> wind</span>`;
+    const swellText = Number.isFinite(point.swell)
+      ? `${round(point.swell, 2)} m ${point.type === "history" ? "lange deining" : `modeldeining${Number.isFinite(point.swellPeriod) ? ` · ${round(point.swellPeriod)} s` : ""}`}`
+      : "–";
+    readout.innerHTML = `<strong>${fmt.dateTime.format(parseTime(point.time))}</strong><span>${point.type === "history" ? "Gemeten" : "Verwachting"}</span><span class="score-readout"><b>${point.score}/100</b> surfscore</span><span><b>${round(point.height, 2)} m</b> golf</span><span><b>${round(point.period)} s</b> periode</span><span><b>${swellText}</b></span><span><b>${direction}</b> richting</span><span><b>${windText}</b> wind</span>`;
   };
   chart.addEventListener("pointermove", showPoint);
   chart.addEventListener("click", showPoint);
@@ -399,6 +416,7 @@ function renderCoast() {
   const coast = state.data.maasvlakte;
   const high = nextTide("high");
   const low = nextTide("low");
+  const daylight = coast.daylight?.find((item) => item.date === localDayKey(new Date(state.data.generatedAt)));
   const moon = state.data.moon;
   const moonShift = moon.phase <= .5 ? 58 - moon.phase * 116 : -((moon.phase - .5) * 116);
   document.querySelector("#coast-grid").innerHTML = `
@@ -417,6 +435,10 @@ function renderCoast() {
         <div class="weather-value"><span>Richting</span><strong>${directionName(coast.windDirection)} <i class="wind-compass" style="--direction:${(coast.windDirection + 180) % 360}deg" aria-label="Wind uit ${directionName(coast.windDirection)}, waait naar ${directionName((coast.windDirection + 180) % 360)}">↑</i></strong><small>${Math.round(coast.windDirection)}°</small></div>
         <div class="weather-value"><span>Luchttemperatuur</span><strong>${round(coast.airTemperature)}°</strong><small>Celsius</small></div>
         <div class="weather-value"><span>Zeewater</span><strong>${round(coast.seaTemperature)}°</strong><small>meting Hoek v. Holland</small></div>
+      </div>
+      <div class="daylight-times" aria-label="Daglicht vandaag">
+        <div><span>Zon op</span><strong>${daylight ? fmt.time.format(parseTime(daylight.sunrise)) : "–"}</strong></div>
+        <div><span>Zon onder</span><strong>${daylight ? fmt.time.format(parseTime(daylight.sunset)) : "–"}</strong></div>
       </div>
     </article>
     <article class="coast-card moon-card">

@@ -56,7 +56,7 @@
           <p class="score-summary" id="score-summary">We combineren de nieuwste metingen en verwachtingen.</p>
           <div class="condition-chips" id="condition-chips"></div>
           <div class="best-window" id="best-window">
-            <span>Beste moment komende 48 uur</span>
+            <span>Beste daglichtmoment komende 48 uur</span>
             <strong>Wordt berekend…</strong>
           </div>
         </aside>
@@ -68,10 +68,10 @@
             <p class="eyebrow">Terugblik & vooruitblik</p>
             <h2 id="surf-days-title">Surfinschatting rond vandaag</h2>
           </div>
-          <p>Het beste surfmoment per dag, berekend met golfhoogte, periode, richting en wind.</p>
+          <p>Het beste surfmoment tijdens daglicht, berekend met golfhoogte, periode, richting en wind.</p>
         </div>
         <div class="five-day-outlook loading-card" id="five-day-outlook" aria-live="polite" aria-busy="true"></div>
-        <p class="surf-days-note">Vorige dagen zijn gebaseerd op metingen. Vandaag en komende dagen gebruiken de actuele verwachting.</p>
+        <p class="surf-days-note">Vorige dagen zijn gebaseerd op metingen. Vandaag en komende dagen gebruiken de actuele verwachting. Beste momenten vallen tussen zon op en zon onder.</p>
       </section>
 
       <section class="section buoy-section" id="boeien">
@@ -128,6 +128,29 @@
             <div><strong>Wind</strong><p>Oostelijke, niet te harde wind is meestal het schoonst.</p></div>
           </article>
         </div>
+      </section>
+
+      <section class="score-method" aria-labelledby="score-method-title">
+        <div class="score-method-lead">
+          <p class="eyebrow">Surfscore uitgelegd</p>
+          <h2 id="score-method-title">Hoe komt de surfinschatting tot stand?</h2>
+          <p>
+            Het getal is een praktische score van 0 tot 100, geen kanspercentage. De score telt vijf onderdelen
+            bij elkaar op en geeft de meeste punten aan bruikbare hoogte, langere golven en lichte offshore wind.
+          </p>
+        </div>
+        <div class="score-points" aria-label="Maximale punten per onderdeel">
+          <article><strong>30</strong><span>Golfhoogte</span><p>Optimaal tussen ongeveer 1,1 en 1,8 meter.</p></article>
+          <article><strong>25</strong><span>Golfperiode</span><p>Meer punten naarmate de periode langer wordt.</p></article>
+          <article><strong>20</strong><span>Golfrichting</span><p>West tot noordwest past het best bij de Maasvlakte.</p></article>
+          <article><strong>15</strong><span>Windrichting</span><p>Oostelijke offshore wind krijgt de meeste punten.</p></article>
+          <article><strong>10</strong><span>Windsnelheid</span><p>Lichte wind scoort beter dan harde wind.</p></article>
+        </div>
+        <p class="score-caps">
+          Kwaliteitsremmen begrenzen de uitkomst bij een periode onder 5,5 seconden, golven onder 0,5 meter,
+          wind boven 32 km/u of golven boven 3 meter. Gemeten deiningshoogte telt momenteel niet apart mee,
+          om golfhoogte niet dubbel te waarderen. Stroming, drukte, lokale gevaren en surfervaring zitten niet in de score.
+        </p>
       </section>
 
       <section class="data-note">
