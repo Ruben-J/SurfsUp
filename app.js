@@ -306,10 +306,14 @@ function chartMarkup(buoy) {
   const historyPath = line(historyPoints, "height");
   const bridge = forecastPoints.length && historyPoints.length ? [historyPoints.at(-1), ...forecastPoints] : forecastPoints;
   const forecastPath = line(bridge, "height");
-  // RWS HTE3 is low-frequency swell (10–33 s). The separate model line is an
-  // estimate using only model partitions within that same period range.
+  // RWS HTE3 is low-frequency swell (10–33 s). The model estimates the same
+  // band, so its line may share the last measured point without becoming data.
   const swellPath = lineWithGaps(historyPoints, "swell");
-  const modelSwellPath = lineWithGaps(forecastPoints, "swell");
+  const lastMeasuredSwellPoint = historyPoints.filter((point) => Number.isFinite(point.swell)).at(-1);
+  const swellBridge = forecastPoints.length && lastMeasuredSwellPoint
+    ? [lastMeasuredSwellPoint, ...forecastPoints]
+    : forecastPoints;
+  const modelSwellPath = lineWithGaps(swellBridge, "swell");
   const scorePath = line(points, "score", scoreY);
   const nowX = x(historyPoints.at(-1) || points[0]);
   const grid = [0, .5, 1].map((ratio) => {
