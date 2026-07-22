@@ -118,6 +118,7 @@ async function fetchMarine(buoy) {
       "swell_wave_height",
       "swell_wave_direction",
       "swell_wave_period",
+      "swell_wave_peak_period",
       "secondary_swell_wave_height",
       "secondary_swell_wave_direction",
       "secondary_swell_wave_period",

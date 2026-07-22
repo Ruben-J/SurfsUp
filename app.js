@@ -346,7 +346,7 @@ function chartMarkup(buoy) {
     </svg>
     </div>
     <div class="chart-readout" aria-live="polite"><span>Beweeg over de grafiek voor de surfscore en condities per uur.</span></div>
-    <p class="model-note">* Benadering op basis van Open-Meteo-deiningcomponenten met een periode van 10–33 s. De lijn blijft los van de RWS-meting, omdat Rijkswaterstaat geen vergelijkbare HTE3-forecast levert.</p>
+    <p class="model-note">* Schatting uit de modelhoogte en -periode: alleen de berekende golfenergie tussen 10–33 s telt mee. De lijn blijft los van de RWS-meting, omdat Rijkswaterstaat geen vergelijkbare HTE3-forecast levert.</p>
   </div>`;
 }
 

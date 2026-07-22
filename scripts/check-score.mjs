@@ -40,6 +40,14 @@ const noLongSwell = longSwellEstimate({
 }, 0);
 assert.deepEqual(noLongSwell, { height: 0, period: null, direction: null });
 
+const spectralTail = longSwellEstimate({
+  swell_wave_height: [1],
+  swell_wave_period: [5.75],
+  swell_wave_peak_period: [7.65],
+  swell_wave_direction: [300],
+}, 0);
+assert.deepEqual(spectralTail, { height: 0.13, period: 10.6, direction: 300 });
+
 const combinedLongSwell = longSwellEstimate({
   swell_wave_height: [0.3],
   swell_wave_period: [12],
@@ -48,7 +56,7 @@ const combinedLongSwell = longSwellEstimate({
   secondary_swell_wave_period: [14],
   secondary_swell_wave_direction: [285],
 }, 0);
-assert.deepEqual(combinedLongSwell, { height: 0.5, period: 13.3, direction: 285 });
+assert.deepEqual(combinedLongSwell, { height: 0.44, period: 13.2, direction: 285 });
 
 console.log("Surfscore-grensgevallen zijn geldig", {
   weakNorth,
@@ -56,5 +64,6 @@ console.log("Surfscore-grensgevallen zijn geldig", {
   cleanSwell,
   tooWindy,
   noLongSwell,
+  spectralTail,
   combinedLongSwell,
 });
