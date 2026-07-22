@@ -306,8 +306,8 @@ function chartMarkup(buoy) {
   const historyPath = line(historyPoints, "height");
   const bridge = forecastPoints.length && historyPoints.length ? [historyPoints.at(-1), ...forecastPoints] : forecastPoints;
   const forecastPath = line(bridge, "height");
-  // RWS HTE3 is low-frequency swell (10–33 s). Open-Meteo's swell partition
-  // also contains much shorter waves, so it must not continue the same line.
+  // RWS HTE3 is low-frequency swell (10–33 s). The separate model line is an
+  // estimate using only model partitions within that same period range.
   const swellPath = lineWithGaps(historyPoints, "swell");
   const modelSwellPath = lineWithGaps(forecastPoints, "swell");
   const scorePath = line(points, "score", scoreY);
@@ -334,7 +334,7 @@ function chartMarkup(buoy) {
 
   return `<div class="chart-wrap">
     <div class="chart-head">
-      <div><strong>Golfhoogte & surfscore per uur</strong><div class="chart-legend"><span>Meting</span><span class="forecast">Verwachting</span><span class="swell">Lange deining (meting)</span><span class="model-swell">Modeldeining*</span><span class="score">Surfscore</span></div></div>
+      <div><strong>Golfhoogte & surfscore per uur</strong><div class="chart-legend"><span>Meting</span><span class="forecast">Verwachting</span><span class="swell">Lange deining (meting)</span><span class="model-swell">Lange-deiningschatting*</span><span class="score">Surfscore</span></div></div>
       <div class="range-switch" aria-label="Kies periode">${rangeButtons}</div>
     </div>
     <div class="chart-scroll">
@@ -346,7 +346,7 @@ function chartMarkup(buoy) {
     </svg>
     </div>
     <div class="chart-readout" aria-live="polite"><span>Beweeg over de grafiek voor de surfscore en condities per uur.</span></div>
-    <p class="model-note">* Modelwaarde van Open-Meteo Marine. De modeldeining gebruikt een andere definitie dan de laagfrequente Rijkswaterstaat-meting en begint daarom als een losse lijn na “Nu”.</p>
+    <p class="model-note">* Benadering op basis van Open-Meteo-deiningcomponenten met een periode van 10–33 s. De lijn blijft los van de RWS-meting, omdat Rijkswaterstaat geen vergelijkbare HTE3-forecast levert.</p>
   </div>`;
 }
 
@@ -377,7 +377,7 @@ function setupChartInteractions() {
     const direction = Number.isFinite(point.direction) ? `${directionName(point.direction)} · ${Math.round(point.direction)}°` : "–";
     const windText = wind ? `${directionName(wind.windDirection)} ${beaufort(wind.windSpeed)} Bft` : "–";
     const swellText = Number.isFinite(point.swell)
-      ? `${round(point.swell, 2)} m ${point.type === "history" ? "lange deining" : `modeldeining${Number.isFinite(point.swellPeriod) ? ` · ${round(point.swellPeriod)} s` : ""}`}`
+      ? `${round(point.swell, 2)} m ${point.type === "history" ? "lange deining" : `lange-deiningschatting${Number.isFinite(point.swellPeriod) ? ` · ${round(point.swellPeriod)} s` : ""}`}`
       : "–";
     readout.innerHTML = `<strong>${fmt.dateTime.format(parseTime(point.time))}</strong><span>${point.type === "history" ? "Gemeten" : "Verwachting"}</span><span class="score-readout"><b>${point.score}/100</b> surfscore</span><span><b>${round(point.height, 2)} m</b> golf</span><span><b>${round(point.period)} s</b> periode</span><span><b>${swellText}</b></span><span><b>${direction}</b> richting</span><span><b>${windText}</b> wind</span>`;
   };

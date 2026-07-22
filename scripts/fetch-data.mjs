@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { longSwellEstimate } from "../long-swell.js";
 
 const RWS_URL =
   "https://ddapi20-waterwebservices.rijkswaterstaat.nl/ONLINEWAARNEMINGENSERVICES/OphalenWaarnemingen";
@@ -117,6 +118,12 @@ async function fetchMarine(buoy) {
       "swell_wave_height",
       "swell_wave_direction",
       "swell_wave_period",
+      "secondary_swell_wave_height",
+      "secondary_swell_wave_direction",
+      "secondary_swell_wave_period",
+      "tertiary_swell_wave_height",
+      "tertiary_swell_wave_direction",
+      "tertiary_swell_wave_period",
       "sea_surface_temperature",
     ].join(","),
     timezone: "Europe/Amsterdam",
@@ -129,14 +136,15 @@ async function fetchMarine(buoy) {
 function marinePoint(json, index) {
   if (index < 0) return null;
   const hourly = json.hourly;
+  const longSwell = longSwellEstimate(hourly, index);
   return {
     time: hourly.time[index],
     waveHeight: hourly.wave_height[index],
     waveDirection: hourly.wave_direction[index],
     wavePeriod: hourly.wave_period[index],
-    swellHeight: hourly.swell_wave_height[index],
-    swellDirection: hourly.swell_wave_direction[index],
-    swellPeriod: hourly.swell_wave_period[index],
+    swellHeight: longSwell.height,
+    swellDirection: longSwell.direction,
+    swellPeriod: longSwell.period,
     seaTemperature: hourly.sea_surface_temperature[index],
   };
 }
@@ -186,7 +194,9 @@ async function fetchBuoy(buoy, start, end) {
         value,
         unit,
         observedAt: marineNow.time,
-        source: "Open-Meteo model",
+        source: key.startsWith("swell")
+          ? "Open-Meteo model, lange-deiningschatting"
+          : "Open-Meteo model",
       };
     }
   }
@@ -194,7 +204,7 @@ async function fetchBuoy(buoy, start, end) {
     value: marineNow?.swellPeriod ?? null,
     unit: "s",
     observedAt: marineNow?.time ?? null,
-    source: "Open-Meteo model",
+    source: "Open-Meteo model, lange-deiningschatting",
   };
 
   const observedTimes = Object.values(metrics).map((metric) => metric.observedAt).filter(Boolean);

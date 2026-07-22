@@ -148,7 +148,7 @@ Bereiken: 24 uur, 7 dagen en 30 dagen historie, gevolgd door maximaal 72 uur for
 
 De horizontale as gebruikt de echte timestamp van ieder datapunt, niet de index in de array. Daardoor blijven lijn, hover en tijdlabels gelijklopen wanneer er een meetuur ontbreekt of er een gat tussen meting en forecast zit.
 
-Rijkswaterstaat biedt bij E13 geen `HTE3`-forecast aan. De grafiek toont daarom twee nadrukkelijk losse deiningslijnen: gemeten laagfrequente deining van RWS en modeldeining van Open-Meteo vanaf “Nu”. Verbind deze lijnen niet. RWS `HTE3` bevat alleen laagfrequente energie van 30–100 mHz (ongeveer 10–33 s), terwijl het model ook veel kortere golfcomponenten als swell indeelt; één doorlopende lijn zou onvergelijkbare waarden en een misleidende sprong tonen.
+Rijkswaterstaat biedt bij E13 geen `HTE3`-forecast aan. De grafiek toont daarom twee nadrukkelijk losse deiningslijnen: gemeten laagfrequente deining van RWS en een lange-deiningschatting vanaf “Nu”. Verbind deze lijnen niet. RWS `HTE3` bevat alleen laagfrequente energie van 30–100 mHz (ongeveer 10–33 s). De schatting combineert daarom alleen de primaire, secundaire en tertiaire Open-Meteo-partities waarvan de periode binnen 10–33 s valt; de componenthoogten worden kwadratisch gecombineerd. Als geen component in die band valt, is de schatting nul. Gebruik nooit rechtstreeks `swell_wave_height`: die bevat hier vaak korte golven van 4–6 s en levert een veel te hoge, onvergelijkbare lijn op.
 
 De historische uur-score wordt berekend met boeihistorie plus de dichtstbijzijnde historische windmeting. De forecastscore gebruikt de weersverwachting bij hetzelfde uur.
 
