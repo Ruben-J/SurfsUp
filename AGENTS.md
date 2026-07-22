@@ -118,7 +118,7 @@ Voer na iedere scorewijziging `npm run check` uit en voeg nieuwe grensgevallen t
 Dit is momenteel bewust verschillende informatie:
 
 - de grote hero-score gebruikt het huidige forecast-uur (`outlook[0]`);
-- de vijfdaagse kaart “Vandaag” toont het beste resterende forecast-uur van vandaag;
+- de vijfdaagse kaart “Vandaag” toont het beste meet- of forecastuur van de hele kalenderdag;
 - de golfgrafiek toont de score voor ieder afzonderlijk uur.
 
 Als dit visueel verwarrend wordt, verduidelijk dan de labels “Nu” en “Beste moment vandaag”; maak de cijfers niet zonder overleg kunstmatig gelijk.
@@ -128,7 +128,8 @@ Als dit visueel verwarrend wordt, verduidelijk dan de labels “Nu” en “Best
 ### Vijfdaagse surfinschatting
 
 - eergisteren en gisteren: beste uur uit gemeten historie;
-- vandaag, morgen en overmorgen: beste uur uit de forecast;
+- vandaag: beste uur uit de gemeten uren van eerder vandaag plus de nog beschikbare forecasturen;
+- morgen en overmorgen: beste uur uit de forecast;
 - een “beste moment” wordt alleen gekozen tussen zonsopkomst en zonsondergang;
 - vandaag staat visueel centraal en groter;
 - op mobiel is de horizontale kaartstrook automatisch op vandaag gecentreerd.

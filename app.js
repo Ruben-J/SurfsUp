@@ -151,7 +151,7 @@ function buildFiveDayOutlook() {
   return [-2, -1, 0, 1, 2].map((offset) => {
     const date = dayAtOffset(reference, offset);
     const key = localDayKey(date);
-    const pool = offset < 0 ? measured : forecast;
+    const pool = offset < 0 ? measured : offset > 0 ? forecast : [...measured, ...forecast];
     const candidates = pool
       .filter((point) => dayKeyForTime(point.time) === key)
       .filter((point) => isDuringDaylight(point.time, state.data.maasvlakte.daylight))
@@ -172,7 +172,9 @@ function dayCardMarkup(day) {
     </article>`;
   }
   const [label, tone] = scoreLabel(day.best.score);
-  const momentLabel = day.offset < 0 ? "Beste gemeten moment" : day.offset === 0 ? "Beste kans vandaag" : "Beste verwachte moment";
+  const momentLabel = day.best.source === "measured"
+    ? "Beste gemeten moment"
+    : day.offset === 0 ? "Beste kans vandaag" : "Beste verwachte moment";
   return `<article class="surf-day ${className}" ${day.offset === 0 ? 'aria-current="date"' : ""}>
     <div class="surf-day-head"><span>${relativeLabel}</span><time datetime="${day.key}">${fmt.day.format(day.date)}</time></div>
     <div class="day-score ${tone}"><strong>${day.best.score}</strong><span>/100</span></div>
