@@ -1,6 +1,34 @@
-import { beaufort, directionDifference, scoreConditions, scoreLabel } from "./scoring.js?v=__ASSET_VERSION__";
+import {
+  beaufort,
+  DEFAULT_SCORE_WEIGHTS,
+  directionDifference,
+  normalizeScoreWeights,
+  scoreConditions,
+  scoreLabel,
+} from "./scoring.js?v=__ASSET_VERSION__";
 
-const state = { data: null, history: null, activeBuoy: "e13", historyHours: 24, chartPoints: [] };
+const SCORE_SETTINGS_KEY = "surfsup-score-weights-v1";
+
+function loadScoreWeights() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(SCORE_SETTINGS_KEY));
+    return Object.fromEntries(Object.entries(DEFAULT_SCORE_WEIGHTS).map(([key, defaultValue]) => {
+      const value = Number(stored?.[key]);
+      return [key, Number.isFinite(value) && value >= 0 && value <= 50 ? value : defaultValue];
+    }));
+  } catch {
+    return { ...DEFAULT_SCORE_WEIGHTS };
+  }
+}
+
+const state = {
+  data: null,
+  history: null,
+  activeBuoy: "e13",
+  historyHours: 24,
+  chartPoints: [],
+  scoreWeights: loadScoreWeights(),
+};
 
 const fmt = {
   time: new Intl.DateTimeFormat("nl-NL", { timeZone: "Europe/Amsterdam", hour: "2-digit", minute: "2-digit" }),
@@ -97,7 +125,7 @@ function buildOutlook(data) {
   const e13 = data.buoys.find((buoy) => buoy.id === "e13") || data.buoys[0];
   return e13.forecast.slice(0, 49).map((wave) => {
     const weather = weatherForTime(wave.time, data.maasvlakte.weatherForecast);
-    return { ...wave, weather, score: scoreConditions(wave, weather) };
+    return { ...wave, weather, score: scoreConditions(wave, weather, state.scoreWeights) };
   });
 }
 
@@ -123,7 +151,7 @@ function buildFiveDayOutlook() {
     const candidates = pool
       .filter((point) => dayKeyForTime(point.time) === key)
       .filter((point) => isDuringDaylight(point.time, state.data.maasvlakte.daylight))
-      .map((point) => ({ ...point, score: scoreConditions(point, point.weather) }));
+      .map((point) => ({ ...point, score: scoreConditions(point, point.weather, state.scoreWeights) }));
     const best = candidates.reduce((winner, point) => (!winner || point.score > winner.score ? point : winner), null);
     return { offset, date, key, best };
   });
@@ -255,7 +283,7 @@ function chartMarkup(buoy) {
       direction: item.waveDirection,
       swell: item.swellHeight,
       swellPeriod: item.swellPeriod,
-      score: scoreConditions(item, weather),
+      score: scoreConditions(item, weather, state.scoreWeights),
       type: "history",
       weather,
     };
@@ -269,7 +297,7 @@ function chartMarkup(buoy) {
       direction: item.waveDirection,
       swell: item.swellHeight,
       swellPeriod: item.swellPeriod,
-      score: scoreConditions(item, weather),
+      score: scoreConditions(item, weather, state.scoreWeights),
       type: "forecast",
       weather,
     };
@@ -412,6 +440,58 @@ function renderBuoy() {
   setupChartInteractions();
 }
 
+function saveScoreWeights() {
+  try {
+    localStorage.setItem(SCORE_SETTINGS_KEY, JSON.stringify(state.scoreWeights));
+  } catch {
+    // De score blijft instelbaar voor deze sessie als browseropslag niet beschikbaar is.
+  }
+}
+
+function renderScoreSettings() {
+  const normalized = normalizeScoreWeights(state.scoreWeights);
+  document.querySelectorAll("[data-score-weight]").forEach((input) => {
+    const key = input.dataset.scoreWeight;
+    input.value = state.scoreWeights[key];
+    const percentage = Math.round(normalized[key]);
+    const output = document.querySelector(`[data-score-weight-value="${key}"]`);
+    if (output) output.textContent = `${percentage}%`;
+    input.setAttribute("aria-valuetext", `${percentage}% invloed`);
+  });
+}
+
+function refreshScoreViews() {
+  if (!state.data) return;
+  renderHero();
+  renderFiveDayOutlook();
+  renderBuoy();
+}
+
+function setupScoreSettings() {
+  const controls = document.querySelector("#score-weight-controls");
+  const reset = document.querySelector("#reset-score-weights");
+  let renderFrame;
+  controls?.addEventListener("input", (event) => {
+    const input = event.target.closest("[data-score-weight]");
+    if (!input) return;
+    state.scoreWeights = { ...state.scoreWeights, [input.dataset.scoreWeight]: Number(input.value) };
+    if (Object.values(state.scoreWeights).every((value) => value === 0)) {
+      state.scoreWeights[input.dataset.scoreWeight] = 1;
+    }
+    saveScoreWeights();
+    renderScoreSettings();
+    cancelAnimationFrame(renderFrame);
+    renderFrame = requestAnimationFrame(refreshScoreViews);
+  });
+  reset?.addEventListener("click", () => {
+    state.scoreWeights = { ...DEFAULT_SCORE_WEIGHTS };
+    saveScoreWeights();
+    renderScoreSettings();
+    refreshScoreViews();
+  });
+  renderScoreSettings();
+}
+
 function nextTide(type) {
   return state.data.maasvlakte.tides.next.find((item) => item.type === type);
 }
@@ -462,6 +542,7 @@ function showError(error) {
 }
 
 async function init() {
+  setupScoreSettings();
   try {
     const [latestResponse, historyResponse] = await Promise.all([
       fetch(`data/latest.json?v=${Date.now()}`, { cache: "no-store" }),

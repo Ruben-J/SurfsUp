@@ -240,10 +240,16 @@ h1 em { color: var(--lime); font-family: Georgia, "Times New Roman", serif; font
 .score-method-lead h2 { margin-bottom: 20px; font-size: clamp(36px, 4vw, 58px); line-height: 1; letter-spacing: -.05em; }
 .score-method-lead > p:last-child { max-width: 720px; margin: 0 auto; color: rgba(255,255,255,.7); line-height: 1.7; }
 .score-points { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-.score-points article { min-height: 190px; padding: 24px 20px; border: 1px solid rgba(255,255,255,.13); border-radius: 18px; background: rgba(255,255,255,.07); }
-.score-points strong { display: block; color: var(--lime); font-size: 44px; line-height: 1; letter-spacing: -.06em; }
-.score-points span { display: block; margin-top: 14px; font-weight: 750; }
+.score-points article { min-height: 220px; padding: 24px 20px; border: 1px solid rgba(255,255,255,.13); border-radius: 18px; background: rgba(255,255,255,.07); display: flex; flex-direction: column; }
+.score-weight-top output { display: block; color: var(--lime); font-size: 40px; font-weight: 800; line-height: 1; letter-spacing: -.06em; }
+.score-weight-top span { display: block; margin-top: 14px; font-weight: 750; }
 .score-points p { margin: 8px 0 0; color: rgba(255,255,255,.62); font-size: 11px; line-height: 1.55; }
+.score-points input[type="range"] { width: 100%; margin: auto 0 0; accent-color: var(--lime); cursor: pointer; }
+.score-points input[type="range"]:focus-visible { outline: 2px solid white; outline-offset: 5px; }
+.score-settings-actions { max-width: 1120px; margin: 18px auto 0; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.score-settings-actions p { margin: 0; color: rgba(255,255,255,.62); font-size: 11px; line-height: 1.55; }
+.score-settings-actions button { flex: 0 0 auto; padding: 10px 14px; color: white; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; background: transparent; cursor: pointer; font-size: 11px; font-weight: 750; }
+.score-settings-actions button:hover { color: var(--deep); background: white; }
 .score-caps { max-width: 920px; margin: 24px auto 0; color: rgba(255,255,255,.58); font-size: 11px; line-height: 1.65; text-align: center; }
 .data-note { padding: 42px max(5vw, 32px); color: rgba(255,255,255,.78); background: #0a2e36; display: flex; justify-content: space-between; gap: 60px; }
 .data-note > div:first-child { max-width: 720px; }
@@ -311,6 +317,7 @@ footer p { margin: 0; }
   .score-points { grid-template-columns: 1fr 1fr; }
   .score-points article { min-height: 165px; }
   .score-points article:last-child { grid-column: span 2; }
+  .score-settings-actions { align-items: flex-start; flex-direction: column; }
   .score-caps { text-align: left; }
   .data-note, footer { flex-direction: column; align-items: flex-start; }
   footer { padding-top: 40px; padding-bottom: 40px; }

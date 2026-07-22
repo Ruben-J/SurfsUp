@@ -99,7 +99,7 @@ Draai deze conventie niet terug zonder expliciete productbeslissing.
 
 ## Surfscore
 
-`scoreConditions(wave, weather)` in `scoring.js` retourneert `0–100` en combineert:
+`scoreConditions(wave, weather, weights)` in `scoring.js` retourneert `0–100` en combineert:
 
 - golfhoogte;
 - golfperiode;
@@ -109,7 +109,7 @@ Draai deze conventie niet terug zonder expliciete productbeslissing.
 
 De score beloont vooral bruikbare hoogte, langere periode, W–NW-deining en lichte offshore wind. Caps voorkomen dat korte windgolven, kleine golven of harde wind een onrealistisch hoge score krijgen.
 
-De uitleg op de pagina benoemt de maximale punten: golfhoogte 30, golfperiode 25, golfrichting 20, windrichting 15 en windsnelheid 10. Het is een gewogen score uit 100 en nadrukkelijk geen kanspercentage. Houd deze uitleg gelijk aan `scoring.js` wanneer de berekening verandert.
+De standaardgewichten zijn golfhoogte 30, golfperiode 25, golfrichting 20, windrichting 15 en windsnelheid 10. Bezoekers kunnen deze relatieve gewichten aanpassen met de schuifregelaars in de uitlegsectie. `normalizeScoreWeights()` rekent iedere combinatie terug naar 100%; de ruwe voorkeur wordt lokaal opgeslagen onder `surfsup-score-weights-v1`. Een wijziging herberekent hero, vijfdaagse kaarten en uurgrafiek direct. De kwaliteitscaps blijven onafhankelijk van de gewichten actief. Het is nadrukkelijk geen kanspercentage.
 
 Voer na iedere scorewijziging `npm run check` uit en voeg nieuwe grensgevallen toe aan `scripts/check-score.mjs`.
 

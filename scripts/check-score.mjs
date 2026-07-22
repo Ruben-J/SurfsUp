@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { longSwellEstimate } from "../long-swell.js";
-import { beaufort, scoreConditions, scoreLabel } from "../scoring.js";
+import { beaufort, normalizeScoreWeights, scoreConditions, scoreLabel } from "../scoring.js";
 
 assert.equal(beaufort(0), 0);
 assert.equal(beaufort(1), 1);
@@ -33,6 +33,20 @@ const tooWindy = score(1.2, 8.5, 285, 38, 95);
 assert.equal(tooWindy, 38);
 assert.equal(scoreLabel(tooWindy)[0], "Weinig kans");
 
+const periodOnly = scoreConditions(
+  { waveHeight: 1.2, wavePeriod: 8.5, waveDirection: 285 },
+  { windSpeed: 8, windDirection: 95 },
+  { height: 0, period: 1, waveDirection: 0, windDirection: 0, windSpeed: 0 },
+);
+assert.equal(periodOnly, 92);
+assert.deepEqual(normalizeScoreWeights({
+  height: 0,
+  period: 0,
+  waveDirection: 0,
+  windDirection: 0,
+  windSpeed: 0,
+}), { height: 30, period: 25, waveDirection: 20, windDirection: 15, windSpeed: 10 });
+
 const noLongSwell = longSwellEstimate({
   swell_wave_height: [1.2],
   swell_wave_period: [5.5],
@@ -63,6 +77,7 @@ console.log("Surfscore-grensgevallen zijn geldig", {
   weakNorthWest,
   cleanSwell,
   tooWindy,
+  periodOnly,
   noLongSwell,
   spectralTail,
   combinedLongSwell,

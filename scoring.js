@@ -9,6 +9,24 @@ export function beaufort(speedKmh) {
   return force === -1 ? 12 : force;
 }
 
+export const DEFAULT_SCORE_WEIGHTS = Object.freeze({
+  height: 30,
+  period: 25,
+  waveDirection: 20,
+  windDirection: 15,
+  windSpeed: 10,
+});
+
+export function normalizeScoreWeights(weights = DEFAULT_SCORE_WEIGHTS) {
+  const values = Object.fromEntries(Object.entries(DEFAULT_SCORE_WEIGHTS).map(([key, defaultValue]) => {
+    const value = Number(weights?.[key]);
+    return [key, Number.isFinite(value) && value >= 0 ? value : defaultValue];
+  }));
+  const total = Object.values(values).reduce((sum, value) => sum + value, 0);
+  if (total <= 0) return { ...DEFAULT_SCORE_WEIGHTS };
+  return Object.fromEntries(Object.entries(values).map(([key, value]) => [key, (value / total) * 100]));
+}
+
 function heightScore(height) {
   if (height < 0.35) return 2;
   if (height < 0.55) return 8;
@@ -54,19 +72,20 @@ function windSpeedScore(speed) {
   return 0;
 }
 
-export function scoreConditions(wave, weather) {
+export function scoreConditions(wave, weather, weights = DEFAULT_SCORE_WEIGHTS) {
   const height = wave?.waveHeight ?? 0;
   const period = wave?.wavePeriod ?? 0;
   const waveDirection = wave?.waveDirection ?? 0;
   const windSpeed = weather?.windSpeed ?? 99;
   const windDirection = weather?.windDirection ?? 270;
 
+  const normalizedWeights = normalizeScoreWeights(weights);
   let score =
-    heightScore(height) +
-    periodScore(period) +
-    waveDirectionScore(waveDirection) +
-    windDirectionScore(windDirection) +
-    windSpeedScore(windSpeed);
+    (heightScore(height) / DEFAULT_SCORE_WEIGHTS.height) * normalizedWeights.height +
+    (periodScore(period) / DEFAULT_SCORE_WEIGHTS.period) * normalizedWeights.period +
+    (waveDirectionScore(waveDirection) / DEFAULT_SCORE_WEIGHTS.waveDirection) * normalizedWeights.waveDirection +
+    (windDirectionScore(windDirection) / DEFAULT_SCORE_WEIGHTS.windDirection) * normalizedWeights.windDirection +
+    (windSpeedScore(windSpeed) / DEFAULT_SCORE_WEIGHTS.windSpeed) * normalizedWeights.windSpeed;
 
   // Korte, lokale windgolven mogen nooit als een sterke surfsessie eindigen.
   if (period < 4.5) score = Math.min(score, 35);

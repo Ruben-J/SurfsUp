@@ -136,15 +136,39 @@
           <h2 id="score-method-title">Hoe komt de surfinschatting tot stand?</h2>
           <p>
             Het getal is een praktische score van 0 tot 100, geen kanspercentage. De score telt vijf onderdelen
-            bij elkaar op en geeft de meeste punten aan bruikbare hoogte, langere golven en lichte offshore wind.
+            bij elkaar op. Met de schuifregelaars bepaal je zelf hoeveel invloed ieder onderdeel heeft.
           </p>
         </div>
-        <div class="score-points" aria-label="Maximale punten per onderdeel">
-          <article><strong>30</strong><span>Golfhoogte</span><p>Optimaal tussen ongeveer 1,1 en 1,8 meter.</p></article>
-          <article><strong>25</strong><span>Golfperiode</span><p>Meer punten naarmate de periode langer wordt.</p></article>
-          <article><strong>20</strong><span>Golfrichting</span><p>West tot noordwest past het best bij de Maasvlakte.</p></article>
-          <article><strong>15</strong><span>Windrichting</span><p>Oostelijke offshore wind krijgt de meeste punten.</p></article>
-          <article><strong>10</strong><span>Windsnelheid</span><p>Lichte wind scoort beter dan harde wind.</p></article>
+        <div class="score-points" id="score-weight-controls" aria-label="Invloed per onderdeel">
+          <article>
+            <div class="score-weight-top"><output data-score-weight-value="height" for="score-weight-height">30%</output><span>Golfhoogte</span></div>
+            <p id="score-weight-height-help">Optimaal tussen ongeveer 1,1 en 1,8 meter.</p>
+            <input id="score-weight-height" data-score-weight="height" type="range" min="0" max="50" step="1" value="30" aria-label="Invloed van golfhoogte" aria-describedby="score-weight-height-help" />
+          </article>
+          <article>
+            <div class="score-weight-top"><output data-score-weight-value="period" for="score-weight-period">25%</output><span>Golfperiode</span></div>
+            <p id="score-weight-period-help">Meer punten naarmate de periode langer wordt.</p>
+            <input id="score-weight-period" data-score-weight="period" type="range" min="0" max="50" step="1" value="25" aria-label="Invloed van golfperiode" aria-describedby="score-weight-period-help" />
+          </article>
+          <article>
+            <div class="score-weight-top"><output data-score-weight-value="waveDirection" for="score-weight-wave-direction">20%</output><span>Golfrichting</span></div>
+            <p id="score-weight-wave-direction-help">West tot noordwest past het best bij de Maasvlakte.</p>
+            <input id="score-weight-wave-direction" data-score-weight="waveDirection" type="range" min="0" max="50" step="1" value="20" aria-label="Invloed van golfrichting" aria-describedby="score-weight-wave-direction-help" />
+          </article>
+          <article>
+            <div class="score-weight-top"><output data-score-weight-value="windDirection" for="score-weight-wind-direction">15%</output><span>Windrichting</span></div>
+            <p id="score-weight-wind-direction-help">Oostelijke offshore wind krijgt de meeste punten.</p>
+            <input id="score-weight-wind-direction" data-score-weight="windDirection" type="range" min="0" max="50" step="1" value="15" aria-label="Invloed van windrichting" aria-describedby="score-weight-wind-direction-help" />
+          </article>
+          <article>
+            <div class="score-weight-top"><output data-score-weight-value="windSpeed" for="score-weight-wind-speed">10%</output><span>Windsnelheid</span></div>
+            <p id="score-weight-wind-speed-help">Lichte wind scoort beter dan harde wind.</p>
+            <input id="score-weight-wind-speed" data-score-weight="windSpeed" type="range" min="0" max="50" step="1" value="10" aria-label="Invloed van windsnelheid" aria-describedby="score-weight-wind-speed-help" />
+          </article>
+        </div>
+        <div class="score-settings-actions">
+          <p>Je voorkeur wordt alleen in deze browser opgeslagen. De percentages worden automatisch naar 100% omgerekend.</p>
+          <button type="button" id="reset-score-weights">Standaard herstellen</button>
         </div>
         <p class="score-caps">
           Kwaliteitsremmen begrenzen de uitkomst bij een periode onder 5,5 seconden, golven onder 0,5 meter,
