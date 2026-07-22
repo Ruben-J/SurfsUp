@@ -194,7 +194,7 @@ function renderHero() {
   ].join("");
   document.querySelector("#best-window strong").textContent = best
     ? `${fmt.dateTime.format(parseTime(best.time))} · score ${best.score}`
-    : "Geen daglichtmoment beschikbaar";
+    : "Geen geschikt moment beschikbaar";
   document.querySelector("#surf-card").classList.remove("loading");
 
   const e13 = state.data.buoys.find((buoy) => buoy.id === "e13");
